@@ -4,10 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
+<script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
 <title>Azure Hub &amp; Spoke – Interactive Traffic Flow Dashboard</title>
 <style>
 :root{--bg:#f3f5f9;--panel:#ffffff;--ink:#1b2333;--muted:#5d6b82;--line:#d6dce6;--hub:#e8f1fd;--hubb:#0f6cbd;--spoke:#eef8f1;--spokeb:#1f8a4c;--onp:#f4effb;--onpb:#6b3fa0;--er:#fff4e5;--erb:#c26b00;--fwc:#c4314b;--net:#eef1f5;--fwd:#0f6cbd;--ret:#e8590c;--priv:#0f6cbd;--pub:#e8590c;--insp:#8a3ffc;--vnra:#0b8a8a;--vnrabg:#e2f6f6;--ok:#1f8a4c;--warn:#b86e00;--err:#c4314b;--okbg:#e7f5ec;--warnbg:#fff4df;--errbg:#fde8ec;--chip:#eef1f6}
-@media (prefers-color-scheme: dark){:root{--bg:#10141c;--panel:#181e29;--ink:#e6ebf3;--muted:#98a4b8;--line:#2c3545;--hub:#14263f;--hubb:#4ea1ff;--spoke:#13291d;--spokeb:#4cc27e;--onp:#241a33;--onpb:#b48ce6;--er:#2e2210;--erb:#f0a33c;--fwc:#ff6b81;--net:#1d2431;--fwd:#4ea1ff;--ret:#ff8a3d;--priv:#4ea1ff;--pub:#ff8a3d;--insp:#b78cff;--vnra:#3cc8c8;--vnrabg:#10302f;--ok:#4cc27e;--warn:#f0a33c;--err:#ff6b81;--okbg:#132a1d;--warnbg:#2e2410;--errbg:#33161d;--chip:#232b3a}}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark;--bg:#10141c;--panel:#181e29;--ink:#e6ebf3;--muted:#98a4b8;--line:#2c3545;--hub:#14263f;--hubb:#4ea1ff;--spoke:#13291d;--spokeb:#4cc27e;--onp:#241a33;--onpb:#b48ce6;--er:#2e2210;--erb:#f0a33c;--fwc:#ff6b81;--net:#1d2431;--fwd:#4ea1ff;--ret:#ff8a3d;--priv:#4ea1ff;--pub:#ff8a3d;--insp:#b78cff;--vnra:#3cc8c8;--vnrabg:#10302f;--ok:#4cc27e;--warn:#f0a33c;--err:#ff6b81;--okbg:#132a1d;--warnbg:#2e2410;--errbg:#33161d;--chip:#232b3a}
+.themebtn{background:var(--chip);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}.themebtn:hover{border-color:var(--fwd)}
+@media (prefers-color-scheme: dark){:root:not([data-theme]){--bg:#10141c;--panel:#181e29;--ink:#e6ebf3;--muted:#98a4b8;--line:#2c3545;--hub:#14263f;--hubb:#4ea1ff;--spoke:#13291d;--spokeb:#4cc27e;--onp:#241a33;--onpb:#b48ce6;--er:#2e2210;--erb:#f0a33c;--fwc:#ff6b81;--net:#1d2431;--fwd:#4ea1ff;--ret:#ff8a3d;--priv:#4ea1ff;--pub:#ff8a3d;--insp:#b78cff;--vnra:#3cc8c8;--vnrabg:#10302f;--ok:#4cc27e;--warn:#f0a33c;--err:#ff6b81;--okbg:#132a1d;--warnbg:#2e2410;--errbg:#33161d;--chip:#232b3a}}
 *{box-sizing:border-box}
 body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
 header{padding:10px 24px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
@@ -131,8 +134,6 @@ tr.used td{background:var(--warnbg);font-weight:600}
 .xmark{stroke:var(--err);stroke-width:3.2;stroke-linecap:round}
 .opt{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-block-end:1px solid var(--line);cursor:pointer}
 .opt:last-child{border:none}.opt small{display:block;color:var(--muted)}
-.outBadge{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--errbg);color:var(--err);font-weight:700}
-.impact li{font-size:12.5px;margin-block-end:4px}
 </style>
 </head>
 <body>
@@ -141,6 +142,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
     <h1>Azure Hub &amp; Spoke — Interactive Traffic Flow Dashboard</h1>
     <div class="sub">Address pool 172.16.0.0/16 · Hub 172.16.0.0/24 · 2 spokes 172.16.1.0/24 &amp; 172.16.2.0/24 · On-prem 192.168.0.0/16 via ExpressRoute (RFC1918 advertised)</div>
   </div>
+  <button class="themebtn" id="btnTheme" type="button" aria-label="Toggle light or dark theme"></button>
   <div class="kpis">
     <div class="kpi"><b>3</b><span>VNets</span></div>
     <div class="kpi" id="kOk"><b>–</b><span>Healthy flows</span></div>
@@ -152,7 +154,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
 <main>
   <div class="card stage">
     <div class="bar">
-      <h2>Topology &amp; live traffic flow <span><span class="outBadge" id="outBadge" hidden></span> <span class="base" id="baseBadge">Baseline configuration</span></span></h2>
+      <h2>Topology &amp; live traffic flow <span><span class="base" id="baseBadge">Baseline configuration</span></span></h2>
       <div class="controls">
         <button class="cfgbtn" id="btnCfg" aria-expanded="false" aria-controls="drawer">⚙ Configuration<span class="dot" id="cfgDot" hidden></span></button>
       </div>
@@ -225,7 +227,6 @@ tr.used td{background:var(--warnbg);font-weight:600}
       <tr><td>Hub route tables</td><td>None on GatewaySubnet or AzureFirewallSubnet</td></tr>
       <tr><td>Optional VNRA</td><td>Not deployed in the baseline. Enable it under What-if to route private traffic (spoke↔spoke, spoke↔on-prem) through the routing appliance while Internet stays on Azure Firewall.</td></tr>
       <tr><td>ExpressRoute</td><td>On-prem advertises 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16. Azure advertises hub + spoke /24s (gateway transit).</td></tr>
-      <tr><td>FastPath</td><td>Off in the baseline. Enable it under Configuration to bypass the ER Gateway on the on-prem → Azure direction (peered spokes + UDRs need ExpressRoute Direct and Ultra Performance / ErGw3AZ / ErGwScale ≥10).</td></tr>
       <tr><td>Peering routes</td><td>Enabled everywhere in the baseline. "Disable peering route propagation" (public preview) is a route-table setting that suppresses the system peering routes so a summarized UDR can win.</td></tr>
     </table>
     </div><div>
@@ -251,23 +252,15 @@ tr.used td{background:var(--warnbg);font-weight:600}
 </main>
 <aside id="drawer" aria-label="Configuration">
   <div class="dh"><b>Configuration</b><span><button id="btnReset" class="preset">Reset to baseline</button> <button id="btnCloseCfg" class="preset" aria-label="Close configuration">✕</button></span></div>
-  <div class="tabs" id="dtabs">
-    <button class="sel" data-pane="dWhat">What-if</button>
-    <button data-pane="dOut">Outage simulation</button>
-  </div>
   <div class="db">
     <div class="pane sel" id="dWhat"><div id="toggles"></div></div>
-    <div class="pane" id="dOut"><div id="outOpts"></div><div id="impact" class="impact"></div></div>
   </div>
 </aside>
 <script>
 const FW_IP='172.16.0.68';
 const VNRA_IP='172.16.0.132';
-const BASE={defaultToFw:true,propagate:true,useRemoteGw:true,udrSpokeToFw:false,udrOnpremToFw:false,gwSubnetRt:false,gwSummary:false,dprGw:false,dprSpoke:false,dprDefFw:false,dprDefVnra:false,fastpath:false,fpSku:true,erDirect:false,vnra:false,vnraSpoke:false,vnraOnprem:false,vnraGw:false,spoke1Only:false,privateSubnet:true,outage:'none'};
-const fpOn=()=>!!(cfg.fastpath&&cfg.fpSku&&cfg.erDirect);
+const BASE={defaultToFw:true,propagate:true,useRemoteGw:true,udrSpokeToFw:false,udrOnpremToFw:false,gwSubnetRt:false,gwSummary:false,dprGw:false,dprDefFw:false,dprDefVnra:false,vnra:false,vnraSpoke:false,vnraOnprem:false,vnraGw:false,spoke1Only:false,privateSubnet:true};
 const on=(i,k)=>!!cfg[k]&&(!cfg.spoke1Only||i===1);
-const OUT={none:'',link:'primary ER link down',circuit:'ExpressRoute circuit down',gateway:'ExpressRoute Gateway down'};
-const hybridUp=()=>cfg.outage==='none'||cfg.outage==='link';
 const cfg=Object.assign({},BASE);
 const SPOKES=[1,2];
 const RFC=['10.0.0.0/8','172.16.0.0/12','192.168.0.0/16'];
@@ -286,18 +279,16 @@ let TABLES={};
 function buildTables(){
   const T={};
   const defaults=()=>[{src:'Default',prefix:'0.0.0.0/0',nh:'Internet'}].concat(RFC.map(p=>({src:'Default',prefix:p,nh:'None'})),[{src:'Default',prefix:'100.64.0.0/10',nh:'None'}]);
-  const bgp=()=>RFC.map(p=>({src:'Virtual network gateway',prefix:p,nh:'VirtualNetworkGateway',ip:'ER (MSEE)',w:!hybridUp()}));
+  const bgp=()=>RFC.map(p=>({src:'Virtual network gateway',prefix:p,nh:'VirtualNetworkGateway',ip:'ER (MSEE)'}));
   SPOKES.forEach(i=>{
-    const r=[{src:'Default',prefix:'172.16.'+i+'.0/24',nh:'VnetLocal'}].concat(on(i,'dprSpoke')?[]:[{src:'Default',prefix:'172.16.0.0/24',nh:'VNetPeering',to:'hub'}],defaults());
+    const r=[{src:'Default',prefix:'172.16.'+i+'.0/24',nh:'VnetLocal'}].concat([{src:'Default',prefix:'172.16.0.0/24',nh:'VNetPeering',to:'hub'}],defaults());
     if(cfg.useRemoteGw&&cfg.propagate)r.push(...bgp());
     if(cfg.defaultToFw)r.push({src:'User',prefix:'0.0.0.0/0',nh:'VirtualAppliance',ip:FW_IP,name:'default-to-fw'});
     if(on(i,'udrSpokeToFw'))r.push({src:'User',prefix:'172.16.0.0/16',nh:'VirtualAppliance',ip:FW_IP,name:'azure-to-fw'});
     if(cfg.vnra&&on(i,'vnraSpoke'))r.push({src:'User',prefix:'172.16.0.0/16',nh:'VirtualAppliance',ip:VNRA_IP,name:'azure-to-vnra'});
     if(cfg.vnra&&on(i,'vnraOnprem'))r.push({src:'User',prefix:'192.168.0.0/16',nh:'VirtualAppliance',ip:VNRA_IP,name:'onprem-to-vnra'});
     if(on(i,'udrOnpremToFw'))r.push({src:'User',prefix:'192.168.0.0/16',nh:'VirtualAppliance',ip:FW_IP,name:'onprem-to-fw'});
-    if(on(i,'dprSpoke')&&cfg.dprDefVnra&&cfg.vnra){const k=r.findIndex(x=>x.name==='default-to-fw');if(k>=0)r.splice(k,1);r.push({src:'User',prefix:'0.0.0.0/0',nh:'VirtualAppliance',ip:VNRA_IP,name:'default-to-vnra'});}
-    else if(on(i,'dprSpoke')&&cfg.dprDefFw&&!r.some(x=>x.name==='default-to-fw'))r.push({src:'User',prefix:'0.0.0.0/0',nh:'VirtualAppliance',ip:FW_IP,name:'default-to-fw'});
-    T['spoke'+i]={title:'vnet-spoke-0'+i+' / snet-app (rt-spoke-0'+i+', gateway route propagation '+((cfg.propagate)?'ON':'OFF')+(on(i,'dprSpoke')?', peering routes DISABLED':'')+')',routes:finalize(r)};
+    T['spoke'+i]={title:'vnet-spoke-0'+i+' / snet-app (rt-spoke-0'+i+', gateway route propagation '+((cfg.propagate)?'ON':'OFF')+')',routes:finalize(r)};
   });
   const peer=()=>SPOKES.map(i=>({src:'Default',prefix:'172.16.'+i+'.0/24',nh:'VNetPeering',to:'spoke'+i}));
   T.fw={title:'vnet-hub / AzureFirewallSubnet (no route table)',routes:finalize([{src:'Default',prefix:'172.16.0.0/24',nh:'VnetLocal'}].concat(peer(),defaults(),bgp()))};
@@ -309,12 +300,11 @@ function buildTables(){
   if(cfg.dprGw&&cfg.dprDefVnra&&cfg.vnra)g.push({src:'User',prefix:'0.0.0.0/0',nh:'VirtualAppliance',ip:VNRA_IP,name:'default-to-vnra'});
   else if(cfg.dprGw&&cfg.dprDefFw)g.push({src:'User',prefix:'0.0.0.0/0',nh:'VirtualAppliance',ip:FW_IP,name:'default-to-fw'});
   const gwRt=cfg.gwSubnetRt||cfg.gwSummary||cfg.dprGw||(cfg.vnra&&cfg.vnraGw);
-  T.gw={title:'vnet-hub / GatewaySubnet (traffic arriving from ExpressRoute'+(fpOn()?', FastPath: gateway bypassed in the data path':'')+')'+(gwRt?' — rt-gatewaysubnet'+(cfg.dprGw?' (peering routes DISABLED)':''):' (no route table)'),routes:finalize(g)};
-  const azW=!hybridUp();const az=[{src:'Advertised by ER Gateway',prefix:'172.16.0.0/24',nh:'Azure',w:azW}];
-  if(cfg.useRemoteGw)SPOKES.forEach(i=>az.push({src:'Advertised by ER Gateway (gateway transit)',prefix:'172.16.'+i+'.0/24',nh:'Azure',w:azW}));
-  T.msee={title:'ExpressRoute circuit — MSEE private peering BGP table',routes:finalize(az.concat(RFC.map(p=>({src:'Advertised by on-prem (CE)',prefix:p,nh:'OnPrem',w:cfg.outage==='circuit'}))))};
-  T.onprem={title:'On-prem core / CE router',routes:finalize([{src:'Connected',prefix:'192.168.0.0/16',nh:'Local'},{src:'Originated aggregate',prefix:'10.0.0.0/8',nh:'Null0'},{src:'Originated aggregate',prefix:'172.16.0.0/12',nh:'Null0'}].concat(az.map(a=>({src:'Learned via ExpressRoute',prefix:a.prefix,nh:'ExpressRoute',w:azW})),[{src:'Static',prefix:'0.0.0.0/0',nh:'LocalInternetEdge'}]))};
-  if(cfg.outage!=='none')Object.values(T).forEach(t=>t.title+=' — ⚠ '+OUT[cfg.outage]+(hybridUp()?' (BGP still up via secondary link)':' (ExpressRoute BGP routes withdrawn)'));
+  T.gw={title:'vnet-hub / GatewaySubnet (traffic arriving from ExpressRoute)'+(gwRt?' — rt-gatewaysubnet'+(cfg.dprGw?' (peering routes DISABLED)':''):' (no route table)'),routes:finalize(g)};
+  const az=[{src:'Advertised by ER Gateway',prefix:'172.16.0.0/24',nh:'Azure'}];
+  if(cfg.useRemoteGw)SPOKES.forEach(i=>az.push({src:'Advertised by ER Gateway (gateway transit)',  prefix:'172.16.'+i+'.0/24',nh:'Azure'}));
+    T.msee={title:'ExpressRoute circuit — MSEE private peering BGP table',routes:finalize(az.concat(RFC.map(p=>({src:'Advertised by on-prem (CE)',prefix:p,nh:'OnPrem'}))))};
+  T.onprem={title:'On-prem core / CE router',routes:finalize([{src:'Connected',prefix:'192.168.0.0/16',nh:'Local'},{src:'Originated aggregate',prefix:'10.0.0.0/8',nh:'Null0'},{src:'Originated aggregate',prefix:'172.16.0.0/12',nh:'Null0'}].concat(az.map(a=>({src:'Learned via ExpressRoute',prefix:a.prefix,nh:'ExpressRoute'})),[{src:'Static',prefix:'0.0.0.0/0',nh:'LocalInternetEdge'}]))};
   TABLES=T;return T;
 }
 function walk(start,dstIp,ctx){
@@ -335,7 +325,7 @@ function walk(start,dstIp,ctx){
         if(dstIp!==EP.internet.ip){H(cur,cur,r,'System default route — private destination sent towards the Internet');return fin('dropped','Private destination sent to the Internet');}
         if(cfg.privateSubnet){H(cur,cur,r,'System route 0.0.0.0/0 → Internet, but the subnet is PRIVATE (default outbound access disabled) and has no explicit outbound method (NAT Gateway, public IP, LB outbound rule) — packet is DROPPED');return fin('dropped','Private subnet without an explicit outbound method: no default outbound access to the Internet from '+NAME[cur]);}
         H(cur,cur,r,'System route 0.0.0.0/0 → Internet: the VM uses Azure default outbound access (Microsoft-owned public IP that can change without notice) — not inspected');nodes.push('internet');bypass=true;return fin('delivered');}
-      if(r.nh==='None'){if(!hybridUp()){H(cur,cur,r,'ExpressRoute routes withdrawn ('+OUT[cfg.outage]+') — only the system route '+r.prefix+' with next hop None is left: DROPPED');return fin('dropped',OUT[cfg.outage]+': the ExpressRoute-learned RFC1918 routes are withdrawn, so '+NAME[cur]+' falls back to the system route '+r.prefix+' → None');}H(cur,cur,r,'System route '+r.prefix+' with next hop None — packet is DROPPED');return fin('dropped','Next hop None for '+r.prefix+' in '+NAME[cur]+' (no gateway route is propagated)');}
+      if(r.nh==='None'){H(cur,cur,r,'System route '+r.prefix+' with next hop None — packet is DROPPED');return fin('dropped','Next hop None for '+r.prefix+' in '+NAME[cur]+' (no gateway route is propagated)');}
     }
     if(cur==='fw'){
       const r=lpm(TABLES.fw.routes,dstIp);
@@ -343,32 +333,28 @@ function walk(start,dstIp,ctx){
       if(r.nh==='VnetLocal'){H('fw','fw',r,'Delivered inside the hub');return fin('delivered');}
       if(r.nh==='VirtualNetworkGateway'){H('fw','fw',r,'Firewall subnet learned '+r.prefix+' from the gateway — forwarded to ExpressRoute');nodes.push('ergw','msee');cur='msee';continue;}
       if(r.nh==='Internet'){H('fw','fw',r,'Firewall SNATs to its public IP and sends to the Internet');nodes.push('internet');snat=true;return fin('delivered');}
-      if(r.nh==='None'){H('fw','fw',r,'Dropped at the firewall: only system route '+r.prefix+' → None matches'+(hybridUp()?'':' (ER routes withdrawn: '+OUT[cfg.outage]+')'));return fin('dropped','Next hop None at the firewall'+(hybridUp()?'':' — '+OUT[cfg.outage]));}
+      if(r.nh==='None'){H('fw','fw',r,'Dropped at the firewall: only system route '+r.prefix+' → None matches');return fin('dropped','Next hop None at the firewall');}
     }
     if(cur==='vnra'){
       const r=lpm(TABLES.vnra.routes,dstIp);
       if(r.nh==='VNetPeering'){H('vnra','vnra',r,'Routing appliance forwards over the hub-spoke peering (no inspection)');nodes.push(r.to);return fin('delivered');}
       if(r.nh==='VnetLocal'){H('vnra','vnra',r,'Delivered inside the hub');nodes.push('hub');return fin('delivered');}
       if(r.nh==='VirtualNetworkGateway'){H('vnra','vnra',r,'Appliance subnet learned '+r.prefix+' from the gateway — forwarded to ExpressRoute');nodes.push('ergw','msee');cur='msee';continue;}
-      if(r.nh==='None'){H('vnra','vnra',r,'Dropped at the routing appliance: only system route '+r.prefix+' → None matches'+(hybridUp()?'':' (ER routes withdrawn: '+OUT[cfg.outage]+')'));return fin('dropped','Next hop None at the routing appliance'+(hybridUp()?'':' — '+OUT[cfg.outage]));}
+      if(r.nh==='None'){H('vnra','vnra',r,'Dropped at the routing appliance: only system route '+r.prefix+' → None matches');return fin('dropped','Next hop None at the routing appliance');}
       H('vnra','vnra',r,'Routing appliance sends the packet to the Internet');nodes.push('internet');bypass=true;return fin('delivered');
     }
     if(cur==='msee'){
-      if(cfg.outage==='circuit'){H('msee','msee',null,'ExpressRoute circuit is down — DROPPED');return fin('dropped','ExpressRoute circuit down');}
       const r=lpm(TABLES.msee.routes,dstIp);
-      if(cfg.outage==='link')hops.length&&(hops[hops.length-1].text+=' (carried on the secondary link only)');
       if(!r){H('msee','msee',null,'No route on MSEE');return fin('dropped','No route on MSEE');}
-      if(r.nh==='Azure'){H('msee','msee',r,'MSEE prefers the Azure-advertised '+r.prefix+' over on-prem '+'172.16.0.0/12 (longest prefix) — sent back into Azure'+(fpOn()?' directly (FastPath: the ER Gateway is bypassed in the data path)':''));if(!fpOn())nodes.push('ergw');cur='gw';continue;}
+      if(r.nh==='Azure'){H('msee','msee',r,'MSEE prefers the Azure-advertised '+r.prefix+' over on-prem '+'172.16.0.0/12 (longest prefix) — sent back into Azure');nodes.push('ergw');cur='gw';continue;}
       if(r.nh==='OnPrem'){H('msee','msee',r,'Forwarded over the circuit to the on-prem CE routers');nodes.push('onprem');cur='onprem';if(inPfx(dstIp,'192.168.0.0/16'))return fin('delivered');continue;}
     }
     if(cur==='gw'){
-      if(cfg.outage==='gateway'){H('ergw','gw',null,'ExpressRoute Gateway is down — DROPPED');return fin('dropped','ExpressRoute Gateway down');}
       const r=lpm(TABLES.gw.routes,dstIp);
-      const FP=fpOn()?'FastPath (ExpressRoute Direct): the gateway only programs the routes; the data path skips it. ':'';
-      if(r.nh==='VNetPeering'){H('ergw','gw',r,FP+(fpOn()?'Delivered':'ER Gateway delivers')+' straight to the spoke over peering');nodes.push(r.to);return fin('delivered');}
-      if(r.nh==='VirtualAppliance'&&r.ip===VNRA_IP){H('ergw','gw',r,FP+'GatewaySubnet UDR '+r.prefix+' sends the packet to the Routing Appliance'+(fpOn()?' (UDRs are honored with FastPath on ExpressRoute Direct)':''));nodes.push('vnra');cur='vnra';continue;}
-      if(r.nh==='VirtualAppliance'){H('ergw','gw',r,FP+'GatewaySubnet UDR '+r.prefix+' sends the packet to Azure Firewall'+(fpOn()?' (UDRs are honored with FastPath on ExpressRoute Direct)':''));nodes.push('fw');cur='fw';continue;}
-      if(r.nh==='VnetLocal'){H('ergw','gw',r,FP+'Delivered inside the hub');nodes.push('hub');return fin('delivered');}
+      if(r.nh==='VNetPeering'){H('ergw','gw',r,'ER Gateway delivers straight to the spoke over peering');nodes.push(r.to);return fin('delivered');}
+      if(r.nh==='VirtualAppliance'&&r.ip===VNRA_IP){H('ergw','gw',r,'GatewaySubnet UDR '+r.prefix+' sends the packet to the Routing Appliance');nodes.push('vnra');cur='vnra';continue;}
+      if(r.nh==='VirtualAppliance'){H('ergw','gw',r,'GatewaySubnet UDR '+r.prefix+' sends the packet to Azure Firewall');nodes.push('fw');cur='fw';continue;}
+      if(r.nh==='VnetLocal'){H('ergw','gw',r,'Delivered inside the hub');nodes.push('hub');return fin('delivered');}
       if(r.nh==='None'&&cfg.dprGw){H('ergw','gw',r,'Peering routes are DISABLED on the GatewaySubnet route table and no UDR covers '+dstIp+' — only the system route '+r.prefix+' → None is left: DROPPED');return fin('dropped','GatewaySubnet: peering routes disabled and no replacement UDR for '+dstIp+' (system route '+r.prefix+' → None)');}
       H('ergw','gw',r,'Dropped');return fin('dropped','No usable route at GatewaySubnet');
     }
@@ -376,7 +362,7 @@ function walk(start,dstIp,ctx){
       const r=lpm(TABLES.onprem.routes,dstIp);
       if(r.nh==='Local'){H('onprem','onprem',r,'Delivered on-prem');return fin('delivered');}
       if(r.nh==='ExpressRoute'){H('onprem','onprem',r,'On-prem router sends '+r.prefix+' over ExpressRoute');nodes.push('msee');cur='msee';continue;}
-      if(r.nh==='Null0'){const why=hybridUp()?'the spoke prefix is not advertised by Azure':'Azure prefixes withdrawn — '+OUT[cfg.outage];H('onprem','onprem',r,'Only the on-prem RFC1918 aggregate '+r.prefix+' matches (Null0) — DROPPED; '+why);return fin('dropped','On-prem has no route for '+dstIp+' ('+why+')');}
+      if(r.nh==='Null0'){const why='the spoke prefix is not advertised by Azure';H('onprem','onprem',r,'Only the on-prem RFC1918 aggregate '+r.prefix+' matches (Null0) — DROPPED; '+why);return fin('dropped','On-prem has no route for '+dstIp+' ('+why+')');}
       H('onprem','onprem',r,'Follows on-prem default route to the local Internet edge — private destination unreachable');return fin('dropped','On-prem has no route for '+dstIp);
     }
     if(cur==='internet'){
@@ -417,8 +403,6 @@ function analyze(src,dst){
   }
   if(dst==='internet'&&f.status==='delivered'&&!f.nodes.includes('fw'))W.push({lvl:'warn',tag:'Bypass',title:'Internet egress bypasses Azure Firewall (default outbound access)',text:'There is no 0.0.0.0/0 UDR to the firewall and the spoke subnet is NOT private, so the VM uses Azure default outbound access: an implicit, Microsoft-owned public IP that can change without notice, with no inspection. New VNets are private by default and would drop this traffic; existing VNets keep default outbound access until the subnet is set to private.'});
   if(dst==='internet'&&f.status==='dropped'&&f.hops.length&&f.hops[f.hops.length-1].route&&f.hops[f.hops.length-1].route.nh==='Internet')W.push({lvl:'err',tag:'NoEgress',title:'No Internet egress — private subnet without explicit outbound method',text:'The spoke has no 0.0.0.0/0 UDR to Azure Firewall, so the system route 0.0.0.0/0 → Internet applies. The subnet is private (default outbound access disabled — the default for VNets created with API versions after March 31, 2026), and it has no NAT Gateway, instance public IP or load balancer outbound rule, so the traffic is dropped. Fix: restore 0.0.0.0/0 → Azure Firewall (recommended, inspected and SNATed), or add an explicit outbound method to the subnet.'});
-  if(cfg.outage!=='none'&&(f.status==='dropped'||(r&&r.status==='dropped'))&&hybridUp()===false)W.push({lvl:'err',tag:'Outage',title:'Flow lost due to '+OUT[cfg.outage],text:cfg.outage==='gateway'?'With the gateway down, BGP to the MSEE is gone: spokes lose every ExpressRoute-learned route (10/8, 172.16/12, 192.168/16) and on-prem loses the Azure prefixes. Mitigate with a zone-redundant gateway SKU (ErGw1AZ+ / ErGwScale) and an S2S VPN gateway as backup path.':'With the circuit down, the gateway withdraws all on-prem routes and on-prem loses the Azure prefixes. Mitigate with a second circuit in another peering location (Maximum Resiliency) and/or an S2S VPN as backup path.'});
-  if(cfg.outage==='link'&&(viaER(f)||viaER(r))&&f.status==='delivered'&&(!r||r.status==='delivered'))W.push({lvl:'warn',tag:'Degraded',title:'Running on the secondary ER link only',text:'The circuit stays up because every ExpressRoute circuit has two links (primary and secondary) with separate BGP sessions. Traffic continues without loss, but there is no redundancy left and only half the aggregate link capacity.'});
   if(!W.length){
     let t='Symmetric path, no hairpin.';
     if(f.nodes.includes('fw'))t+=' Both directions are inspected by Azure Firewall'+(dst==='internet'?' (SNAT to the firewall public IP).':'.');
@@ -439,7 +423,6 @@ function nhName(r){
 }
 function trace(p){return p.hops.map(h=>h.route?NAME[h.node]+' — '+(TBL[h.table]||'')+': '+h.route.prefix+' → '+nhName(h.route)+' ('+h.route.src+')':NAME[h.node]+' — '+h.text);}
 function missingBgpCause(){
-  if(!hybridUp())return 'the ExpressRoute BGP routes were withdrawn because the '+(cfg.outage==='gateway'?'ER Gateway is down':'ER circuit is down');
   if(!cfg.useRemoteGw)return '"Use remote gateways" is off on the spoke peering, so the spoke cannot use the hub gateway and receives no ExpressRoute routes';
   if(!cfg.propagate)return '"Propagate gateway routes" is disabled on the spoke route table, so the BGP routes are not injected into the subnet';
   return 'no ExpressRoute route is available';
@@ -448,8 +431,6 @@ function explain(w,a){
   const S=NAME[a.src],D=NAME[a.dst],dIp=EP[a.dst].ip;
   if(w.tag==='PeerBypass'){const h=w.hop,ut=TABLES[h.table].routes.find(u=>u.state==='Active'&&u.src==='User'&&u.nh==='VirtualAppliance'&&maskOf(u.prefix)>0&&maskOf(u.prefix)<maskOf(h.route.prefix));
     return ['The VNet peering automatically creates a system route for every peered address space ('+h.route.prefix+' in '+TBL[h.table]+').','The route table also holds a summarized UDR '+(ut?ut.prefix+' → '+nhName(ut):'')+' meant to force the traffic through the NVA.','Azure applies longest-prefix match first: '+h.route.prefix+' is more specific than '+(ut?ut.prefix:'the UDR')+', so the system peering route wins and the NVA is skipped. The "UDR beats system" rule only applies to IDENTICAL prefixes.','Fix (preview): on this route table clear "Enable peering routes" (disablePeeringRoute = All). The peering stays up but its system routes are suppressed, so the summarized UDR is selected. Without a UDR there would be no replacement route at all.'];}
-  if(w.tag==='Preview')return ['Disable peering route propagation is a public-preview route-table setting.','The Azure Firewall or NVA used as next hop must be in the same virtual network as the source workload\u2019s NIC; a next hop in a peered VNet isn\u2019t supported.','In this hub-and-spoke design the firewall lives in the hub, so enabling it on spoke route tables is outside the supported scenario. The supported pattern is the GatewaySubnet route table (gateway and firewall are both in the hub).'];
-  if(w.tag==='FastPath')return fpOn()?['With FastPath the ER Gateway still exchanges BGP routes and programs them, but packets from the MSEE are sent directly to the destination VM, removing the gateway from the inbound data path (higher throughput, lower latency).','Peered spokes and UDRs over FastPath require ExpressRoute Direct and a gateway of Ultra Performance, ErGw3AZ or ErGwScale (10+ scale units).','Outbound traffic from Azure to on-premises already goes straight to the MSEE, so FastPath changes the on-prem → Azure direction.','Not supported with FastPath: internal load balancers, PaaS services and Azure Firewall in spokes; hub-deployed firewall and internal load balancers do work.']:['FastPath bypasses the gateway only for destinations it supports: with an ExpressRoute provider circuit that is the hub VNet only. Peered spokes and UDRs need ExpressRoute Direct.','Gateway SKU must be Ultra Performance, ErGw3AZ or ErGwScale with at least 10 scale units.'];
   if(w.tag==='Hairpin'){
     const p=a.f.nodes.includes('msee')?a.f:a.r;const from=p===a.f?a.src:a.dst,to=p===a.f?a.dst:a.src;
     const gwHop=p.hops.find(h=>h.table==='gw');
@@ -462,7 +443,7 @@ function explain(w,a){
       'Azure ALWAYS applies longest-prefix match first; the "UDR beats BGP" rule only applies to identical prefixes. /12 is more specific than /0, so the BGP route wins and the default route is never used for this destination.',
       'Why doesn\u2019t the ER Gateway simply send it back to '+NAME[to]+'? Because for outbound traffic the ER Gateway does not forward packets at all. It is mainly a control-plane component: it learns routes via BGP and programs them into every NIC of the hub and peered spokes. The next hop "Virtual network gateway" points to the MSEE edge routers of the circuit (the next-hop IPs in effective routes are MSEE addresses). The packet goes from the VM host straight onto the circuit — the gateway never gets a chance to make a decision. (The diagram draws the packet via the gateway icon for readability.)',
       'At the MSEE (the ExpressRoute peering location, possibly hundreds of km away) the lookup for '+EP[to].ip+' finds 172.16.0.0/12 from on-prem and '+spPfx(to)+' from the Azure ER Gateway (advertised thanks to gateway transit / "Use remote gateways"). Longest prefix wins again: /24 beats /12, so the MSEE U-turns the packet back towards Azure.',
-      'Inbound, the packet passes the ER Gateway'+(fpOn()?' — except that FastPath is active (ExpressRoute Direct + supported SKU), so the MSEE delivers it directly and the gateway is bypassed. The hairpin itself still happens at the MSEE. ':' (unless FastPath is used: it needs an Ultra Performance/ErGw3AZ/ErGwScale gateway and, for peered spokes and UDRs, ExpressRoute Direct — then the gateway is bypassed in this direction too). ')+'The GatewaySubnet lookup '+(gwHop&&gwHop.route?'uses '+gwHop.route.prefix+' → '+nhName(gwHop.route):'uses its system peering route')+(gwToFw?', so the packet is handed to Azure Firewall first and then delivered to '+NAME[to]+'.':', which delivers it directly to '+NAME[to]+'.')];
+      'Inbound, the packet passes the ER Gateway. The GatewaySubnet lookup '+(gwHop&&gwHop.route?'uses '+gwHop.route.prefix+' → '+nhName(gwHop.route):'uses its system peering route')+(gwToFw?', so the packet is handed to Azure Firewall first and then delivered to '+NAME[to]+'.':', which delivers it directly to '+NAME[to]+'.')];
     if(fwFail)L.push('The two directions do NOT take the same path: one direction goes through Azure Firewall and the other hairpins past it. On its own a hairpin only makes traffic slow — here it also breaks the session (see the firewall asymmetry warning).');
     else if(a.W.some(x=>x.dev==='vnra'))L.push('The two directions do NOT take the same path: one direction is forwarded by the VNRA and the other hairpins over ExpressRoute. The VNRA does not inspect, so packets still arrive — but the session is asymmetric (see the VNRA asymmetry warning) and the hairpinned direction is slow and depends on ExpressRoute.');
     else if(nonMirror)L.push('Both directions hairpin over ExpressRoute and are then handed to Azure Firewall by the GatewaySubnet route table, so the firewall still sees both halves of the session and the flow works — but the reply is not the mirror of the request, and traffic is only inspected after it has already left Azure and come back. Every packet travels to the peering location and back: extra latency, circuit bandwidth consumed twice, limited by ER Gateway throughput, and broken whenever ExpressRoute is down.');
@@ -515,24 +496,13 @@ function explain(w,a){
       'Here '+missingBgpCause()+'. The None route for '+h.route.prefix+' becomes active in '+TBL[h.table]+'.',
       (h.table==='fw'||h.table==='vnra')?'The '+TBL[h.table]+' has no route table (correct: AzureFirewallSubnet must keep 0.0.0.0/0 → Internet), so once the ExpressRoute routes are gone the system route '+h.route.prefix+' → None is the best match and the packet to '+dst+' is discarded at '+NAME[h.node]+'.':
       (TABLES[h.table]&&TABLES[h.table].routes.some(r=>r.src==='User'&&r.prefix==='0.0.0.0/0')?'':'There is no 0.0.0.0/0 user-defined route in '+TBL[h.table]+' (a 0.0.0.0/0 UDR would invalidate these None routes and catch the traffic), so longest-prefix match picks '+h.route.prefix+' → None and the packet to '+dst+' is discarded at '+NAME[h.node]+'.'),
-      hybridUp()?'Fix: restore the ExpressRoute routes (enable propagation / Use remote gateways), or add explicit UDRs for the private ranges (e.g. 172.16.0.0/16 and 192.168.0.0/16 → Azure Firewall / VNRA) that are reachable without ExpressRoute.':(h.route.prefix==='192.168.0.0/16'?'Fix: on-prem is only reachable via ExpressRoute — add a resilient backup path (second circuit in another peering location and/or S2S VPN).':'Fix: keep spoke-to-spoke inside Azure with UDR 172.16.0.0/16 → Azure Firewall or VNRA, so it no longer depends on ExpressRoute.')];
+      'Fix: restore the ExpressRoute routes (enable propagation / Use remote gateways), or add explicit UDRs for the private ranges (e.g. 172.16.0.0/16 and 192.168.0.0/16 → Azure Firewall / VNRA) that are reachable without ExpressRoute.'];
     if(h&&h.route&&h.route.nh==='Null0')return [
       'On-prem originates the RFC1918 aggregates (10/8, 172.16/12) towards ExpressRoute and points them to Null0 locally, so it only knows the Azure prefixes it learns from the MSEE via BGP.',
-      'Here '+(hybridUp()?'the Azure gateway does not advertise '+dst+'\u2019s prefix because "Use remote gateways" is off on the spoke peering (no gateway transit)':'the Azure prefixes were withdrawn because the '+(cfg.outage==='gateway'?'ER Gateway is down':'ER circuit is down'))+'.',
+      'Here the Azure gateway does not advertise '+dst+'\u2019s prefix because "Use remote gateways" is off on the spoke peering (no gateway transit).',
       'The only match left for '+dst+' is the aggregate '+h.route.prefix+' → Null0, so the on-prem router discards the packet.'];
     return ['The packet reaches '+NAME[h?h.node:p.nodes[p.nodes.length-1]]+' but no usable route exists: '+p.reason+'.'];
   }
-  if(w.tag==='Outage'){
-    const sp=/^spoke/.test(a.src)?a.src:/^spoke/.test(a.dst)?a.dst:'spoke1';
-    const has0=TABLES[sp].routes.some(r=>r.state==='Active'&&r.src==='User'&&r.prefix==='0.0.0.0/0');
-    const L=[cfg.outage==='gateway'?'With the ER Gateway down, the BGP sessions between the gateway and the MSEE drop.':'With the circuit down, both BGP sessions (primary and secondary link) between the MSEE and the ER Gateway / on-prem drop.',
-      'Azure withdraws every ExpressRoute-learned route from the hub and spoke subnets; on-prem withdraws the Azure prefixes, so on-prem can no longer reach any spoke.'];
-    if(has0)L.push('In '+NAME[sp]+' the 0.0.0.0/0 UDR → '+nhName(lpm(TABLES[sp].routes,'8.8.8.8'))+' overrides the system RFC1918 None routes, so private traffic is NOT dropped in the spoke: it follows the default route to the firewall. Traffic to on-prem then dies at the firewall, because AzureFirewallSubnet (correctly, without a route table) only has the system 192.168.0.0/16 → None route left.');
-    else L.push('In '+NAME[sp]+' there is no 0.0.0.0/0 UDR, so the system RFC1918 None routes become active and private traffic is dropped in the spoke itself.');
-    L.push(has0?'Spoke-to-spoke keeps working through Azure Firewall (if the firewall rules allow it) — note that during the outage this traffic silently moves from the uninspected ExpressRoute hairpin to the firewall, so firewall rules must permit it.':'Spoke-to-spoke only survives if it is routed via Azure Firewall or the VNRA (172.16.0.0/16 UDR) instead of hairpinning over ExpressRoute.');
-    L.push('Internet traffic keeps working because 0.0.0.0/0 → Azure Firewall does not depend on ExpressRoute.');
-    return L;}
-  if(w.tag==='Degraded')return ['Every ExpressRoute circuit has two links (primary and secondary), each with its own BGP session. Normally traffic is spread over both (ECMP).','When one link fails its routes are withdrawn and all traffic moves to the remaining link — no packet loss, but no redundancy and half the aggregate bandwidth.'];
   if(w.tag==='NoEgress')return [
     'Without a 0.0.0.0/0 UDR, the spoke uses the system route 0.0.0.0/0 → Internet.',
     'The next hop "Internet" only works if the VM has an outbound method: an explicit one (NAT Gateway on the subnet, a public IP on the NIC, a Standard Load Balancer outbound rule) or implicit default outbound access.',
@@ -548,14 +518,8 @@ function extraWarnings(a){
   [[a.f,EP[d].ip],[a.r,EP[s].ip]].forEach(([p,ip],k)=>{
     const h=peerBypass(p,ip);
     if(h&&!W.some(x=>x.tag==='PeerBypass'))W.push({lvl:'warn',tag:'PeerBypass',title:'UDR is bypassed by a more specific system peering route',text:'In '+TBL[h.table]+' the system peering route '+h.route.prefix+' is more specific than the UDR that should send '+ip+' to the NVA, so longest-prefix match picks the peering route and the '+(k?'return':'forward')+' traffic skips the firewall/appliance. Fix: disable peering route propagation on this route table (preview) so the summarized UDR wins, or add one UDR per peered prefix.',hop:h});
-    const st=p&&p.hops[0]&&p.hops[0].table;
-    if(st&&/^spoke\d$/.test(st)&&on(+st.slice(5),'dprSpoke')&&p.hops[0].route&&p.hops[0].route.nh==='VirtualAppliance'&&!W.some(x=>x.tag==='Preview'))
-      W.push({lvl:'warn',tag:'Preview',title:'Unsupported in preview: NVA next hop is in a peered virtual network',text:'Disable peering route propagation requires the Azure Firewall/NVA next hop to be in the SAME virtual network as the source workload\u2019s NIC. '+NAME[st]+' sends this traffic to '+(p.hops[0].route.ip===FW_IP?'Azure Firewall':'the VNRA')+' in the hub, a peered VNet — that combination isn\u2019t supported during public preview, so real behavior is not guaranteed. The simulation shows the routing table as configured.'});
   });
-  if(cfg.fastpath&&(a.f.nodes.includes('msee')||(a.r&&a.r.nodes.includes('msee')))){
-    if(fpOn())W.push({lvl:'ok',tag:'FastPath',title:'ExpressRoute FastPath active',text:'Traffic arriving from ExpressRoute is delivered from the MSEE straight to the destination VM, bypassing the ER Gateway data path.'});
-    else W.push({lvl:'ok',tag:'FastPath',title:'FastPath enabled but not effective for peered spokes',text:!cfg.fpSku?'The ExpressRoute gateway SKU does not support FastPath (needs Ultra Performance, ErGw3AZ or ErGwScale with 10+ scale units), so traffic still crosses the gateway.':'The circuit is a provider circuit: FastPath only reaches VMs in the hub VNet. Virtual network peering (spokes) and UDRs over FastPath need ExpressRoute Direct, so traffic to the spokes still crosses the ER Gateway.'});
-  }
+  return W;
   return W;
 }
 const SEV={err:0,warn:1,ok:2};
@@ -563,7 +527,7 @@ analyze=function(src,dst){const a=_analyzeCore(src,dst);a.W.push(...extraWarning
   if(a.W.some(x=>x.dev==='fw')&&a.W.some(x=>x.tag==='Hairpin'))a.W.forEach(x=>{if(x.tag==='Hairpin'){x.title='ExpressRoute hairpin (inefficient path) — combined with the firewall asymmetry the session FAILS';}});a.W.forEach(w=>{w.why=explain(w,a);});a.f.trace=trace(a.f);if(a.r)a.r.trace=trace(a.r);return a;};
 function healthyPaths(s,d){
   const save=Object.assign({},cfg);
-  Object.assign(cfg,{outage:'none',propagate:true,useRemoteGw:true});buildTables();let a=_analyzeCore(s,d);
+  Object.assign(cfg,{propagate:true,useRemoteGw:true});buildTables();let a=_analyzeCore(s,d);
   if(a.f.status!=='delivered'||(a.r&&a.r.status!=='delivered')){Object.assign(cfg,BASE);buildTables();a=_analyzeCore(s,d);}
   Object.assign(cfg,save);buildTables();
   return {f:a.f.nodes,r:a.r?a.r.nodes:null};
@@ -665,19 +629,12 @@ function refreshLabels(){
     const v=[];if(cfg.vnra&&on(i,'vnraSpoke'))v.push('172.16/16');if(cfg.vnra&&on(i,'vnraOnprem'))v.push('192.168/16');
     $('rtTxt'+i).textContent='rt-spoke-0'+i+' → Firewall: '+(u.length?u.join(', '):'none');
     $('rtTxtV'+i).textContent=v.length?'rt-spoke-0'+i+' → VNRA: '+v.join(', '):'';
-    $('rtTxtB'+i).textContent='Propagate gw routes: '+(cfg.propagate?'ON':'OFF')+' · peering routes '+(on(i,'dprSpoke')?'OFF':'ON')+' · '+(cfg.privateSubnet?'Private subnet':'Default outbound ON');
+    $('rtTxtB'+i).textContent='Propagate gw routes: '+(cfg.propagate?'ON':'OFF')+' · peering routes ON · '+(cfg.privateSubnet?'Private subnet':'Default outbound ON');
     $('pTxt'+i).textContent='Peering: Use remote GW '+(cfg.useRemoteGw?'✓':'✗')+' · Allow forwarded ✓';
     ['sT','sA','sB','rtTxt','rtTxtV','rtTxtB','pTxt'].forEach(k=>fitText($(k+i),262));
   });
-  const o=cfg.outage;
-  $('lnkP').classList.toggle('down',o==='link'||o==='circuit');$('lnkS').classList.toggle('down',o==='circuit');
-  $('lnkC').classList.toggle('down',o==='gateway'||o==='circuit');
-  $('n-msee').classList.toggle('failed',o==='circuit');$('n-ergw').classList.toggle('failed',o==='gateway');
-  const G=$('outg');G.innerHTML='';const X=(x,y)=>{el('path',{d:`M${x-7},${y-7} L${x+7},${y+7} M${x+7},${y-7} L${x-7},${y+7}`,class:'xmark'},G);};
-  if(o==='link')X(252,422);if(o==='circuit'){X(252,422);X(252,440);X(360,394);}if(o==='gateway')X(560,402);
-  $('outBadge').hidden=o==='none';$('outBadge').textContent='⚡ '+(OUT[o]||'');
   $('gwrtTxt').textContent=cfg.dprGw&&cfg.gwSummary?'rt: /16 → FW · no peer rts':cfg.dprGw?'rt: peering rts off':cfg.gwSummary?'rt: 172.16/16 → FW':cfg.gwSubnetRt?'rt: spokes → FW':(cfg.vnra&&cfg.vnraGw)?'rt: spokes → VNRA':'no route table';fitText($('gwrtTxt'),104);
-  $('gwtTxt').textContent=cfg.fastpath?(fpOn()?'⚡ FastPath (bypassed)':'FastPath n/a for spokes'):'gateway transit';fitText($('gwtTxt'),104);
+  $('gwtTxt').textContent='gateway transit';fitText($('gwtTxt'),104);
   $('vnraSub').classList.toggle('nodep',!cfg.vnra);
   const mod=Object.keys(BASE).some(k=>BASE[k]!==cfg[k]);
   $('baseBadge').textContent=mod?'What-if configuration (modified)':'Baseline configuration';
@@ -699,10 +656,6 @@ function pts(nodes,off){
       if(isS(p)&&n==='vnra'){P.push([860,SPY[+p.slice(5)]]);P.push([812,448]);}
       if(p==='vnra'&&isS(n)){P.push([812,448]);P.push([860,SPY[+n.slice(5)]]);}
       if(p==='fw'&&n==='ergw')P.push([637,365]);
-      if(p==='msee'&&(isS(n)||n==='fw'||n==='vnra')){ // FastPath: MSEE delivers directly, below the gateway
-        if(!(nodes[k-2]==='ergw'))P.push([420,492]);
-        P.push([470,505]);P.push([630,505]);
-        if(isS(n)){P.push([805,500]);P.push([860,SPY[+n.slice(5)]]);}else if(n==='fw')P.push([637,365]);}
       if(p==='ergw'&&n==='fw')P.push([637,365]);
     }
     if(n==='msee'&&p==='ergw'&&nx&&nx!=='onprem'){ // hairpin U-turn around the MSEE
@@ -749,13 +702,8 @@ const TOG=[
  ['spoke1Only','Apply the spoke UDR what-ifs to Spoke 1 only','Spoke 2 keeps the baseline route table (only 0.0.0.0/0 → Firewall). Simulates inconsistent route tables between spokes — e.g. 172.16.0.0/16 → Firewall on Spoke 1 only gives hairpin + firewall asymmetry (session fails).'],
  ['#','Disable peering route propagation (preview)'],
  ['dprGw','GatewaySubnet route table: disable peering route propagation','Route table property disablePeeringRoute = All ("Enable peering routes" cleared). Suppresses the system peering routes to the spokes so a summarized UDR wins. Creates no replacement route: without a UDR on-prem → spoke is dropped. Supported scenario — gateway and firewall are in the same (hub) VNet.','prev'],
- ['dprSpoke','Spoke route tables: disable peering route propagation','Removes the spoke → hub peering route. During preview the Azure Firewall/NVA next hop must be in the SAME VNet as the source NIC; a hub firewall used from a spoke is NOT supported, so flows get a warning.','prev'],
- ['dprDefFw','Add default route 0.0.0.0/0 → Azure Firewall to the route tables with peering routes disabled','Catch-all replacement for the suppressed peering routes: every destination not covered by a more specific route (including the hub and spokes) goes to the firewall. Applies to the GatewaySubnet and/or spoke route tables that have "disable peering route propagation" on. Note: Microsoft advises against a 0.0.0.0/0 UDR on the GatewaySubnet; prefer the summarized /16.'],
- ['dprDefVnra','Add default route 0.0.0.0/0 → Routing Appliance (VNRA) instead','Same, but the next hop is the VNRA (requires the VNRA below). Replaces a default-to-firewall UDR on the affected spoke route tables.'],
- ['#','ExpressRoute FastPath'],
- ['fastpath','Enable FastPath on the ExpressRoute connection','Traffic from on-prem goes from the MSEE directly to the VM, bypassing the gateway data path. Reaching peered spokes and honoring UDRs requires ExpressRoute Direct and an Ultra Performance / ErGw3AZ / ErGwScale (10+ units) gateway. Not supported to ILBs/PaaS in spokes.'],
- ['erDirect','Circuit is ExpressRoute Direct','OFF = provider circuit: FastPath only reaches VMs in the hub VNet, so spoke traffic still crosses the gateway.'],
- ['fpSku','Gateway SKU supports FastPath','Ultra Performance, ErGw3AZ, or ErGwScale ≥ 10 scale units. OFF = Standard/High Performance/ErGw1-2AZ: FastPath cannot be enabled.'],
+ ['dprDefFw','Add default route 0.0.0.0/0 → Azure Firewall to the GatewaySubnet route table','Catch-all replacement for the suppressed peering routes: every destination not covered by a more specific route (including the spokes) goes to the firewall. Requires "disable peering route propagation" on the GatewaySubnet. Note: Microsoft advises against a 0.0.0.0/0 UDR on the GatewaySubnet; prefer the summarized /16.'],
+ ['dprDefVnra','Add default route 0.0.0.0/0 → Routing Appliance (VNRA) instead','Same, but the next hop is the VNRA (requires the VNRA below).'],
  ['#','Virtual Network Routing Appliance (VNRA)'],
  ['vnra','Deploy Virtual Network Routing Appliance (VNRA)','Azure-managed, zone-resilient forwarding layer (10–200 Gbps) in VirtualNetworkApplianceSubnet 172.16.0.128/26, IP 172.16.0.132. Forwards only — no inspection.'],
  ['vnraSpoke','Spoke UDR 172.16.0.0/16 → VNRA','Spoke-to-spoke via the routing appliance (removes the ER hairpin).'],
@@ -763,17 +711,14 @@ const TOG=[
  ['vnraGw','GatewaySubnet route table: spoke /24s → VNRA','On-prem-to-spoke via the routing appliance (needed for symmetry). Keep "Propagate gateway routes" ON on the GatewaySubnet route table.']];
 const CONFLICT={dprDefFw:'dprDefVnra',dprDefVnra:'dprDefFw',udrSpokeToFw:'vnraSpoke',vnraSpoke:'udrSpokeToFw',udrOnpremToFw:'vnraOnprem',vnraOnprem:'udrOnpremToFw',gwSubnetRt:'vnraGw',vnraGw:'gwSubnetRt'};
 const VSUB=['vnraSpoke','vnraOnprem','vnraGw','dprDefVnra'];
-const FSUB=['erDirect','fpSku'];
 function buildToggles(){
   const c=$('toggles');c.innerHTML='';
   TOG.forEach(([k,l,d,fl])=>{
     if(k==='#'){const h=document.createElement('div');h.className='grp';h.textContent=l;c.appendChild(h);return;}
     const w=document.createElement('label');w.className='tg';const i=document.createElement('input');i.type='checkbox';i.checked=cfg[k];i.id='t_'+k;
     if(VSUB.includes(k)){i.disabled=!cfg.vnra;w.style.paddingInlineStart='22px';if(!cfg.vnra)w.style.opacity='.5';}
-    if(FSUB.includes(k)){i.disabled=!cfg.fastpath;w.style.paddingInlineStart='22px';if(!cfg.fastpath)w.style.opacity='.5';}
     i.addEventListener('change',()=>{cfg[k]=i.checked;if(i.checked&&CONFLICT[k]&&(k.startsWith('vnra')?cfg.vnra:true))cfg[CONFLICT[k]]=false;
       if(k==='vnra'&&i.checked&&!VSUB.some(x=>cfg[x])){['vnraSpoke','vnraOnprem','vnraGw'].forEach(x=>{cfg[x]=true;cfg[CONFLICT[x]]=false;});}
-      if(k==='fastpath'&&i.checked){cfg.erDirect=true;cfg.fpSku=true;}
       buildToggles();recompute(true);});
     const s=document.createElement('div');s.innerHTML='<b></b><small></small>';const b=s.querySelector('b');b.textContent=l;if(fl==='prev'){const p=document.createElement('span');p.className='badge-prev';p.textContent='PREVIEW';b.appendChild(p);}s.querySelector('small').textContent=d;w.appendChild(i);w.appendChild(s);c.appendChild(w);});
   const n=document.createElement('p');n.className='note';n.textContent='A route table can hold only one route per prefix, so the matching Firewall and VNRA options switch each other off. Enabling the VNRA turns on all three VNRA routes (recommended pattern: private → VNRA, 0.0.0.0/0 → Azure Firewall).';c.appendChild(n);
@@ -789,7 +734,7 @@ function renderList(id,p,status){
   p.hops.forEach(h=>{const li=document.createElement('li');li.innerHTML=hopHtml(h);ol.appendChild(li);});
   const li=document.createElement('li');li.innerHTML=p.status==='delivered'?'<b style="color:var(--ok)">✔ Delivered</b> — path: '+p.nodes.filter(n=>n!=='hub').map(n=>NAME[n]).join(' → '):'<b style="color:var(--err)">✖ Dropped</b>';ol.appendChild(li);
 }
-const ISSUE={Dropped:'request/reply dropped',NoEgress:'no Internet egress (private subnet)',Asymmetric:'asymmetric routing',Hairpin:'ExpressRoute hairpin (inefficient)',NonMirror:'non-mirrored path',Degraded:'no ER redundancy',Bypass:'Internet egress uninspected',PeerBypass:'UDR bypassed by peering route',Preview:'unsupported preview combination'};
+const ISSUE={Dropped:'request/reply dropped',NoEgress:'no Internet egress (private subnet)',Asymmetric:'asymmetric routing',Hairpin:'ExpressRoute hairpin (inefficient)',NonMirror:'non-mirrored path',Bypass:'Internet egress uninspected',PeerBypass:'UDR bypassed by peering route',Preview:'unsupported preview combination'};
 function issues(r){const seen=new Set();return r.W.filter(w=>ISSUE[w.tag]&&!seen.has(w.tag+(w.dev||''))&&seen.add(w.tag+(w.dev||'')));}
 function verdict(r){const iss=issues(r);const n=iss.length;
   const list=iss.map(w=>w.tag==='Asymmetric'?(w.dev==='fw'?'asymmetric via Firewall (session breaks)':w.dev==='vnra'?'asymmetric via VNRA':'asymmetric path'):ISSUE[w.tag]).join(' + ');
@@ -832,34 +777,13 @@ function renderMatrix(){
       if(!valid(s,d)){td.className='na';td.textContent='—';}else{
         const a=analyze(s,d);const tags=a.W.map(w=>w.tag);
         td.className='c '+a.lvl+(cur.src===s&&cur.dst===d?' selc':'');
-        const SH={Dropped:'✖ Drop',NoEgress:'✖ No egress',Asymmetric:'✖ Asym',Hairpin:'↺ Hairpin',NonMirror:'⇄ Path',Degraded:'◐ Degr',Bypass:'⚠ Bypass',PeerBypass:'⚠ UDR skipped',Preview:'⚠ Preview'};const parts=[...new Set(tags)].filter(t=>SH[t]).sort((x,y)=>Object.keys(SH).indexOf(x)-Object.keys(SH).indexOf(y)).map(t=>SH[t]);
+        const SH={Dropped:'✖ Drop',NoEgress:'✖ No egress',Asymmetric:'✖ Asym',Hairpin:'↺ Hairpin',NonMirror:'⇄ Path',Bypass:'⚠ Bypass',PeerBypass:'⚠ UDR skipped',Preview:'⚠ Preview'};const parts=[...new Set(tags)].filter(t=>SH[t]).sort((x,y)=>Object.keys(SH).indexOf(x)-Object.keys(SH).indexOf(y)).map(t=>SH[t]);
         td.innerHTML='';if(!parts.length)td.textContent='✔ OK';parts.forEach((p,pi)=>{if(pi){td.appendChild(document.createElement('br'));}td.appendChild(document.createTextNode(p));});
         td.title=a.W.map(w=>w.title).join('; ');
         if(tags.includes('Dropped')||tags.includes('NoEgress'))dr++;if(tags.includes('Asymmetric'))as++;if(tags.includes('Hairpin'))hp++;if(a.lvl==='ok')ok++;
         td.addEventListener('click',()=>select(s,d,true));}
       r.appendChild(td);});b.appendChild(r);});
-  renderImpact();
   $('kOk').querySelector('b').textContent=ok;$('kHp').querySelector('b').textContent=hp;$('kAs').querySelector('b').textContent=as;$('kDr').querySelector('b').textContent=dr;
-}
-const OPTS=[['none','No outage','Normal operation.'],['link','Primary ER link down','One of the two circuit links (or its BGP session) fails; the secondary link carries all traffic.'],['circuit','Entire ER circuit down','Both links / the peering location are unavailable (e.g. provider or MSEE outage).'],['gateway','ER Gateway down','The ExpressRoute virtual network gateway is unavailable (e.g. zonal failure on a non-zone-redundant SKU).']];
-function buildOutage(){const c=$('outOpts');c.innerHTML='';OPTS.forEach(([k,l,d])=>{const w=document.createElement('label');w.className='opt';const i=document.createElement('input');i.type='radio';i.name='outage';i.value=k;i.checked=cfg.outage===k;i.addEventListener('change',()=>{cfg.outage=k;recompute(true);});const s=document.createElement('div');s.innerHTML='<b></b><small></small>';s.querySelector('b').textContent=l;s.querySelector('small').textContent=d;w.appendChild(i);w.appendChild(s);c.appendChild(w);});}
-function renderImpact(){
-  const box=$('impact');box.innerHTML='';if(cfg.outage==='none')return;
-  const saved=cfg.outage;const pairs=[];SRC_OPTS.forEach(s=>DST_OPTS.forEach(d=>{if(valid(s,d))pairs.push([s,d]);}));
-  cfg.outage='none';buildTables();const before={};pairs.forEach(([s,d])=>before[s+d]=analyze(s,d));
-  cfg.outage=saved;buildTables();
-  const lost=[],deg=[],okk=[];
-  pairs.forEach(([s,d])=>{const a=analyze(s,d),b=before[s+d];const bad=a.W.some(w=>w.tag==='Dropped');const wasBad=b.W.some(w=>w.tag==='Dropped');
-    if(bad&&!wasBad)lost.push([s,d]);else if(a.W.some(w=>w.tag==='Degraded'))deg.push([s,d]);else if(!bad)okk.push([s,d]);});
-  const grp=(arr)=>{const m={};arr.forEach(([s,d])=>{const k=(s==='onprem'?'On-prem':'Spokes')+' → '+(d==='onprem'?'On-prem':d==='internet'?'Internet':'Spokes');m[k]=(m[k]||0)+1;});return Object.entries(m).map(([k,v])=>k+' ('+v+')').join(', ')||'none';};
-  const h=document.createElement('div');h.className='w '+(lost.length?'err':deg.length?'warn':'ok');
-  const t=document.createElement('b');t.textContent='Impact: '+lost.length+' flows lost, '+deg.length+' degraded, '+okk.length+' unaffected';h.appendChild(t);
-  const ul=document.createElement('ul');ul.style.margin='4px 0 0 0';ul.style.paddingInlineStart='18px';
-  [['Lost',grp(lost)],['Degraded (no redundancy)',grp(deg)],['Still working',grp(okk)]].forEach(([k,v])=>{const li=document.createElement('li');li.textContent=k+': '+v;ul.appendChild(li);});
-  const li=document.createElement('li');
-  const s2s=analyze('spoke1','spoke2');const s2sOk=s2s.f.status==='delivered'&&(!s2s.r||s2s.r.status==='delivered')&&!s2s.W.some(x=>x.dev==='fw');const s2sDev=s2s.f.nodes.includes('vnra')?'the Routing Appliance (VNRA)':s2s.f.nodes.includes('fw')?'Azure Firewall':'';
-  li.textContent=cfg.outage==='link'?'Note: no impact on reachability thanks to the circuit\u2019s built-in link redundancy — restore the primary link to regain resiliency.':s2sOk?'Spoke-to-spoke survives via '+(s2sDev||'the hub')+'.'+(s2sDev==='Azure Firewall'&&!on(1,'udrSpokeToFw')?' It is caught by the 0.0.0.0/0 UDR because the ExpressRoute routes are gone — before the outage it hairpinned over ExpressRoute uninspected, now it needs firewall rules that allow it.':''):'Note: spoke-to-spoke traffic is lost too. Route 172.16.0.0/16 to the Firewall or the VNRA on every spoke to make it independent of ExpressRoute.';
-  ul.appendChild(li);h.appendChild(ul);box.appendChild(h);
 }
 function clearActive(){document.querySelectorAll('#nodes .node').forEach(n=>n.classList.remove('active','retn','dropnode'));}
 function stopAnim(){if(anim){cancelAnimationFrame(anim.id);anim=null;}$('flows').innerHTML='';clearActive();}
@@ -881,8 +805,8 @@ function dropFx(F,x,y,pk,node,msg){
 }
 function dropMsg(p,who){const h=p.hops[p.hops.length-1];
   if(h&&h.route&&h.route.nh==='Internet')return '✖ '+who+' dropped at '+NAME[h.node]+': private subnet, no outbound method (no 0/0 → Firewall, no NAT Gateway)';const at=NAME[h?h.node:p.nodes[0]];
-  if(h&&h.route)return '✖ '+who+' dropped at '+at+': '+h.route.prefix+' → '+nhName(h.route)+(hybridUp()?'':' ('+OUT[cfg.outage]+')');
-  return '✖ '+who+' dropped at '+at+(cfg.outage!=='none'?' — '+OUT[cfg.outage]:'');}
+  if(h&&h.route)return '✖ '+who+' dropped at '+at+': '+h.route.prefix+' → '+nhName(h.route);
+  return '✖ '+who+' dropped at '+at;}
 function play(){
   stopAnim();const F=$('flows');
   const legs=[{p:res.f,ret:false,off:-4,c:legClass(res.src,res.dst,res.f),gh:res.ghost&&res.ghost.f}];
@@ -962,20 +886,25 @@ function select(s,d,go){
 }
 function recompute(go){buildTables();refreshLabels();select(cur.src,cur.dst,go);}
 function init(){
-  drawTopo();fillSelects();buildToggles();buildOutage();
+  drawTopo();fillSelects();buildToggles();
   $('btnPlay').addEventListener('click',()=>{const s=$('selSrc').value,d=$('selDst').value;if(!valid(s,d)){alert('Choose a different source and destination (on-prem Internet breakout is out of scope).');return;}select(s,d,true);});
   $('selSrc').addEventListener('change',()=>{const s=$('selSrc').value,d=$('selDst').value;if(valid(s,d))select(s,d,false);});
   $('selDst').addEventListener('change',()=>{const s=$('selSrc').value,d=$('selDst').value;if(valid(s,d))select(s,d,false);});
   $('selTable').addEventListener('change',renderRoutes);
   $('btnOverview').addEventListener('click',overview);
-  $('btnReset').addEventListener('click',()=>{Object.assign(cfg,BASE);buildToggles();buildOutage();recompute(true);});
+  $('btnReset').addEventListener('click',()=>{Object.assign(cfg,BASE);buildToggles();recompute(true);});
   const setCfg=o=>{document.body.classList.toggle('cfgopen',o);$('btnCfg').setAttribute('aria-expanded',o);};
   $('btnCfg').addEventListener('click',()=>setCfg(!document.body.classList.contains('cfgopen')));
   $('btnCloseCfg').addEventListener('click',()=>setCfg(false));
   document.addEventListener('keydown',e=>{if(e.key==='Escape')setCfg(false);});
-  [['tabs'],['dtabs']].forEach(([id])=>$(id).addEventListener('click',e=>{const b=e.target.closest('button[data-pane]');if(!b)return;
+  const themeBtn=$('btnTheme');
+  const curTheme=()=>document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  const paintTheme=()=>{const t=curTheme();themeBtn.textContent=t==='dark'?'☀ Light':'🌙 Dark';themeBtn.setAttribute('aria-label','Switch to '+(t==='dark'?'light':'dark')+' theme');};
+  themeBtn.addEventListener('click',()=>{const n=curTheme()==='dark'?'light':'dark';document.documentElement.dataset.theme=n;try{localStorage.setItem('theme',n);}catch(e){}paintTheme();});
+  paintTheme();
+  ['tabs'].forEach(id=>$(id).addEventListener('click',e=>{const b=e.target.closest('button[data-pane]');if(!b)return;
     [...$(id).children].forEach(x=>x.classList.toggle('sel',x===b));
-    const scope=id==='tabs'?['pFlow','pRoutes','pMatrix','pDesign']:['dWhat','dOut'];scope.forEach(p=>$(p).classList.toggle('sel',p===b.dataset.pane));}));
+    ['pFlow','pRoutes','pMatrix','pDesign'].forEach(p=>$(p).classList.toggle('sel',p===b.dataset.pane));}));
     recompute(true);
 }
 init();

@@ -5,7 +5,7 @@ const path = require('path');
 const vm = require('vm');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const script = html.match(/<script>([\s\S]*)<\/script>/)[1];
+const script = html.slice(html.lastIndexOf('<script>') + 8, html.lastIndexOf('</script>'));
 const engine = script.slice(0, script.indexOf("const $=id=>"));
 const ctx = vm.createContext({});
 vm.runInContext(engine + `
@@ -31,14 +31,6 @@ check('baseline spoke1->onprem delivered', delivered('spoke1', 'onprem'));
 check('baseline onprem->spoke1 delivered', delivered('onprem', 'spoke1'));
 check('baseline spoke1->internet via fw', fwdNodes('spoke1', 'internet').includes('fw') && delivered('spoke1', 'internet'));
 
-reset({ fastpath: true, erDirect: true });
-check('FastPath Direct skips ergw', !fwdNodes('onprem', 'spoke1').includes('ergw') && delivered('onprem', 'spoke1'));
-check('FastPath info tag', has('onprem', 'spoke1', 'FastPath'));
-reset({ fastpath: true, erDirect: false });
-check('FastPath provider: gateway stays', fwdNodes('onprem', 'spoke1').includes('ergw'));
-reset({ fastpath: true, erDirect: true, fpSku: false });
-check('FastPath bad SKU: gateway stays', fwdNodes('onprem', 'spoke1').includes('ergw'));
-
 reset({ gwSummary: true });
 check('summary alone -> PeerBypass', has('onprem', 'spoke1', 'PeerBypass') && !fwdNodes('onprem', 'spoke1').includes('fw'));
 reset({ gwSummary: true, dprGw: true });
@@ -47,22 +39,12 @@ reset({ dprGw: true });
 check('DPR alone drops', analyze('onprem', 'spoke1').f.status === 'dropped');
 check('DPR removes gw peering routes', !ctx.api.TABLES.gw.routes.some(r => r.nh === 'VNetPeering'));
 
-reset({ dprSpoke: true });
-check('spoke DPR removes peering route', !ctx.api.TABLES.spoke1.routes.some(r => r.nh === 'VNetPeering'));
-check('spoke DPR Preview warning', has('spoke1', 'internet', 'Preview'));
-
 reset({ dprGw: true, dprDefFw: true });
 check('DPR + default->FW: onprem->spoke via fw', fwdNodes('onprem', 'spoke1').includes('fw') && delivered('onprem', 'spoke1'));
 reset({ dprGw: true, dprDefVnra: true, vnra: true });
 check('DPR + default->VNRA: onprem->spoke via vnra', fwdNodes('onprem', 'spoke1').includes('vnra') && delivered('onprem', 'spoke1'));
-reset({ dprSpoke: true, dprDefVnra: true, vnra: true });
-check('spoke DPR + default->VNRA replaces default-to-fw', ctx.api.TABLES.spoke1.routes.some(r => r.name === 'default-to-vnra') && !ctx.api.TABLES.spoke1.routes.some(r => r.name === 'default-to-fw'));
-check('spoke DPR + default->VNRA sends internet to vnra', analyze('spoke1', 'internet').f.nodes.includes('vnra'));
-
 reset({ udrOnpremToFw: true });
 check('192.168/16->FW asymmetry', has('spoke1', 'onprem', 'Asymmetric'));
-reset({ outage: 'circuit' });
-check('circuit outage drops', !delivered('spoke1', 'onprem'));
 
 console.log(failed ? `\n${failed} FAILED` : '\nAll passed');
 process.exit(failed ? 1 : 0);
