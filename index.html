@@ -31,7 +31,7 @@ body.cfgopen main{margin-inline-end:430px}
 .stage .bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between;margin-block-end:8px}
 .stage .bar h2{margin:0}
 svg{width:100%;height:auto;display:block}
-#topo{width:100%;height:calc(100vh - 250px);min-height:420px}
+#topo{width:100%;height:auto;max-height:calc(100vh - 250px)}
 #flowCls{margin-top:6px;min-height:28px}
 button.cfgbtn{background:var(--fwd);border-color:var(--fwd);color:#fff;font-weight:600}
 button.cfgbtn .dot{display:inline-block;inline-size:8px;block-size:8px;border-radius:50%;background:var(--warn);margin-inline-start:6px}
@@ -118,7 +118,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
 .mx td.na{color:var(--muted)}
 .mx td.c:hover{outline:2px solid var(--fwd)}
 .mx td.selc{outline:2px solid var(--ink)}
-.topowrap{position:relative}
+.topowrap{position:relative}#topo{max-width:1000px;margin:0 auto;display:block}.dtl{display:none}#tip{position:fixed;z-index:50;pointer-events:none;max-width:300px;padding:8px 10px;border-radius:8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.35);font-size:12px;line-height:1.5}#tip b{display:block;margin-bottom:2px}#tip[hidden]{display:none}
 .mxwin{position:absolute;inset-block-start:6px;inset-inline-start:6px;z-index:5;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel);opacity:.96;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .mxwin h3{margin:0;font-size:12px}
 .mxwin .bar{margin-block-end:4px;display:flex;gap:8px;align-items:center;justify-content:space-between}
@@ -170,7 +170,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
       <table class="mx"><thead id="mxHead"></thead><tbody id="mxBody"></tbody></table>
       <p class="note">Click a cell to animate that flow.</p>
     </div>
-    <svg id="topo" viewBox="0 18 1180 565" role="img" aria-label="Hub and spoke topology diagram">
+    <svg id="topo" viewBox="0 18 1140 565" role="img" aria-label="Hub and spoke topology diagram">
       <defs>
         <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
@@ -551,13 +551,13 @@ function drawTopo(){
   el('rect',{x:485,y:292,width:300,height:120,rx:8,fill:'var(--panel)',stroke:'var(--line)'},gvs);
   el('text',{x:493,y:308,class:'xs'},gvs,'VirtualNetworkApplianceSubnet');
   const gv=el('g',{class:'node',id:'n-vnra','data-t':'vnra'},gvs);
-  el('rect',{x:580,y:318,width:110,height:70,rx:10,class:'halo'},gv);
-  el('rect',{x:584,y:322,width:102,height:62,rx:8,fill:'var(--vnrabg)',stroke:'var(--vnra)',class:'vbox'},gv);
-  el('text',{x:635,y:345,'text-anchor':'middle',class:'lbl'},gv,'⇶ VNRA');
-  el('text',{x:635,y:361,'text-anchor':'middle',class:'xs'},gv,'Routing Appliance');
-  el('text',{x:635,y:374,'text-anchor':'middle',class:'xs'},gv,'.128/26 · 172.16.0.132');
+  el('rect',{x:580,y:331,width:110,height:44,rx:10,class:'halo'},gv);
+  el('rect',{x:584,y:335,width:102,height:36,rx:8,fill:'var(--vnrabg)',stroke:'var(--vnra)',class:'vbox'},gv);
+  el('text',{x:635,y:358,'text-anchor':'middle',class:'lbl'},gv,'⇶ VNRA');
+  el('text',{class:'xs dtl'},gv,'Routing Appliance');
+  el('text',{class:'xs dtl'},gv,'.128/26 · 172.16.0.132');
   // links
-  SPOKES.forEach(i=>{const j=J(i);el('path',{d:`M${j[0]},${j[1]} L885,${SPY[i]}`,class:'link peer'},L);
+  SPOKES.forEach(i=>{const j=J(i);el('path',{d:`M${j[0]},${j[1]} L930,${SPY[i]}`,class:'link peer'},L);
     el('text',{x:830,y:(j[1]+SPY[i])/2-6,class:'xs'},L,'peering');});
   el('path',{d:'M579,488 L420,488',class:'link erlink',id:'lnkC'},L);
   el('path',{d:'M300,480 L205,480',class:'link erlink',id:'lnkP','stroke-width':2},L);
@@ -574,49 +574,58 @@ function drawTopo(){
   el('text',{x:713,y:86,'text-anchor':'middle',class:'lbl'},gi,'🌐 Internet');
   // fw
   const gf=el('g',{class:'node',id:'n-fw','data-t':'fw'},N);
-  el('rect',{x:580,y:186,width:110,height:70,rx:10,class:'halo'},gf);
-  el('rect',{x:584,y:190,width:102,height:62,rx:8,fill:'var(--errbg)',stroke:'var(--fwc)',class:'vbox'},gf);
-  el('text',{x:635,y:215,'text-anchor':'middle',class:'lbl'},gf,'🔥 Azure Firewall');
-  el('text',{x:635,y:232,'text-anchor':'middle',class:'xs'},gf,'172.16.0.68');
-  el('text',{x:635,y:245,'text-anchor':'middle',class:'xs'},gf,'no route table');
+  el('rect',{x:580,y:200,width:110,height:44,rx:10,class:'halo'},gf);
+  el('rect',{x:584,y:204,width:102,height:36,rx:8,fill:'var(--errbg)',stroke:'var(--fwc)',class:'vbox'},gf);
+  el('text',{x:635,y:227,'text-anchor':'middle',class:'lbl'},gf,'🔥 Azure Firewall');
+  el('text',{class:'xs dtl'},gf,'172.16.0.68');
+  el('text',{class:'xs dtl'},gf,'no route table');
   // ergw
   const gg=el('g',{class:'node',id:'n-ergw','data-t':'gw'},N);
-  el('rect',{x:575,y:452,width:120,height:72,rx:10,class:'halo'},gg);
-  el('rect',{x:579,y:456,width:112,height:64,rx:8,fill:'var(--er)',stroke:'var(--erb)',class:'vbox'},gg);
-  el('text',{x:635,y:481,'text-anchor':'middle',class:'lbl'},gg,'⇄ ER Gateway');
-  el('text',{x:635,y:497,'text-anchor':'middle',class:'xs',id:'gwtTxt'},gg,'gateway transit');
-  el('text',{x:635,y:510,'text-anchor':'middle',class:'xs',id:'gwrtTxt'},gg,'no route table');
+  el('rect',{x:575,y:466,width:120,height:44,rx:10,class:'halo'},gg);
+  el('rect',{x:579,y:470,width:112,height:36,rx:8,fill:'var(--er)',stroke:'var(--erb)',class:'vbox'},gg);
+  el('text',{x:635,y:493,'text-anchor':'middle',class:'lbl'},gg,'⇄ ER Gateway');
+  el('text',{class:'xs dtl',id:'gwtTxt'},gg,'gateway transit');
+  el('text',{class:'xs dtl',id:'gwrtTxt'},gg,'no route table');
   // msee
   const gm=el('g',{class:'node',id:'n-msee','data-t':'msee',transform:'translate(0,58)'},N);
-  el('rect',{x:296,y:390,width:128,height:80,rx:12,class:'halo'},gm);
-  el('rect',{x:300,y:394,width:120,height:72,rx:10,fill:'var(--er)',stroke:'var(--erb)',class:'vbox'},gm);
-  el('text',{x:360,y:420,'text-anchor':'middle',class:'lbl'},gm,'ER Circuit');
-  el('text',{x:360,y:436,'text-anchor':'middle',class:'xs'},gm,'MSEE @ peering');
-  el('text',{x:360,y:449,'text-anchor':'middle',class:'xs'},gm,'location');
+  el('rect',{x:296,y:408,width:128,height:44,rx:12,class:'halo'},gm);
+  el('rect',{x:300,y:412,width:120,height:36,rx:10,fill:'var(--er)',stroke:'var(--erb)',class:'vbox'},gm);
+  el('text',{x:360,y:435,'text-anchor':'middle',class:'lbl'},gm,'ER Circuit');
+  el('text',{class:'xs dtl'},gm,'MSEE @ peering location');
   // onprem
   const go=el('g',{class:'node',id:'n-onprem','data-t':'onprem',transform:'translate(0,58)'},N);
-  el('rect',{x:16,y:346,width:193,height:168,rx:14,class:'halo'},go);
-  el('rect',{x:20,y:350,width:185,height:160,rx:12,fill:'var(--onp)',stroke:'var(--onpb)',class:'vbox'},go);
-  el('text',{x:32,y:375,class:'lbl'},go,'🏢 On-prem Datacenter');
-  el('text',{x:32,y:394,class:'sm'},go,'192.168.0.0/16');
-  el('text',{x:32,y:470,class:'xs'},go,'Advertises RFC1918 over ER:');
-  el('text',{x:32,y:485,class:'xs'},go,'10/8 · 172.16/12 · 192.168/16');
-  el('text',{x:32,y:500,class:'xs'},go,'Host 192.168.10.10');
+  el('rect',{x:16,y:403,width:193,height:54,rx:14,class:'halo'},go);
+  el('rect',{x:20,y:407,width:185,height:46,rx:12,fill:'var(--onp)',stroke:'var(--onpb)',class:'vbox'},go);
+  el('text',{x:32,y:435,class:'lbl'},go,'🏢 On-prem Datacenter');
+  el('text',{class:'sm dtl'},go,'192.168.0.0/16');
+  el('text',{class:'xs dtl'},go,'Advertises RFC1918 over ER:');
+  el('text',{class:'xs dtl'},go,'10/8 · 172.16/12 · 192.168/16');
+  el('text',{class:'xs dtl'},go,'Host 192.168.10.10');
   // spokes
-  SPOKES.forEach(i=>{const y=SPY[i]-64;const g=el('g',{class:'node',id:'n-spoke'+i,'data-t':'spoke'+i},N);
-    el('rect',{x:881,y:y-4,width:293,height:136,rx:13,class:'halo'},g);
-    el('rect',{x:885,y:y,width:285,height:128,rx:11,fill:'var(--spoke)',stroke:'var(--spokeb)',class:'vbox'},g);
-    el('text',{x:897,y:y+19,class:'lbl',id:'sT'+i},g,'vnet-spoke-0'+i+' · 172.16.'+i+'.0/24');
-    el('text',{x:897,y:y+36,class:'sm',id:'sA'+i},g,'snet-app 172.16.'+i+'.0/25 · VM 172.16.'+i+'.4');
-    el('text',{x:897,y:y+51,class:'sm',id:'sB'+i},g,'snet-data 172.16.'+i+'.128/25');
-    el('text',{x:897,y:y+70,class:'xs',id:'rtTxt'+i},g,'');
-    el('text',{x:897,y:y+84,class:'xs',id:'rtTxtV'+i},g,'');
-    el('text',{x:897,y:y+98,class:'xs',id:'rtTxtB'+i},g,'');
-    el('text',{x:897,y:y+116,class:'xs',id:'pTxt'+i},g,'');
+  SPOKES.forEach(i=>{  const y=SPY[i]-26;const g=el('g',{class:'node',id:'n-spoke'+i,'data-t':'spoke'+i},N);
+      el('rect',{x:926,y:y-4,width:208,height:60,rx:13,class:'halo'},g);
+      el('rect',{x:930,y:y,width:200,height:52,rx:11,fill:'var(--spoke)',stroke:'var(--spokeb)',class:'vbox'},g);
+      el('text',{x:942,y:y+31,class:'lbl',id:'sT'+i},g,'vnet-spoke-0'+i+' · 172.16.'+i+'.0/24');
+      el('text',{class:'sm dtl',id:'sA'+i},g,'snet-app 172.16.'+i+'.0/25 · VM 172.16.'+i+'.4');
+      el('text',{class:'sm dtl',id:'sB'+i},g,'snet-data 172.16.'+i+'.128/25');
+      el('text',{class:'xs dtl',id:'rtTxt'+i},g,'');
+      el('text',{class:'xs dtl',id:'rtTxtV'+i},g,'');
+      el('text',{class:'xs dtl',id:'rtTxtB'+i},g,'');
+      el('text',{class:'xs dtl',id:'pTxt'+i},g,'');
   });
 
   const LB=el('g',{id:'lblLayer'},null);$('topo').insertBefore(LB,$('flows'));
   [[252,470,'Private peering'],[252,516,'primary / secondary'],[500,478,'ER connection']].forEach(([x,y,t])=>el('text',{x,y,'text-anchor':'middle',class:'xs lbltop'},LB,t));
+  let tip=$('tip');if(!tip){tip=document.createElement('div');tip.id='tip';tip.hidden=true;document.body.appendChild(tip);}
+  document.querySelectorAll('#nodes .node').forEach(n=>{
+    n.addEventListener('mouseenter',()=>{
+      const d=[...n.querySelectorAll('.dtl')].map(t=>t.textContent).filter(Boolean);
+      const h=n.querySelector('.lbl');
+      tip.innerHTML='<b>'+(h?h.textContent:'')+'</b>'+d.map(x=>x.replace(/&/g,'&amp;').replace(/</g,'&lt;')).join('<br>');
+      tip.hidden=!d.length&&!h;});
+    n.addEventListener('mousemove',e=>{tip.style.left=Math.min(e.clientX+14,innerWidth-320)+'px';tip.style.top=(e.clientY+14)+'px';});
+    n.addEventListener('mouseleave',()=>{tip.hidden=true;});
+  });
   document.querySelectorAll('#nodes .node').forEach(n=>n.addEventListener('click',()=>{const t=n.getAttribute('data-t');if(t){$('selTable').value=t;renderRoutes();}}));
 }
 function fitText(t,max){if(!t)return;t.removeAttribute('textLength');t.removeAttribute('lengthAdjust');try{if(t.getComputedTextLength()>max){t.setAttribute('textLength',max);t.setAttribute('lengthAdjust','spacingAndGlyphs');}}catch(e){}}
@@ -628,10 +637,10 @@ function refreshLabels(){
     $('rtTxtV'+i).textContent=v.length?'rt-spoke-0'+i+' → VNRA: '+v.join(', '):'';
     $('rtTxtB'+i).textContent='Propagate gw routes: '+(cfg.propagate?'ON':'OFF')+' · peering routes ON · '+(cfg.privateSubnet?'Private subnet':'Default outbound ON');
     $('pTxt'+i).textContent='Peering: Use remote GW '+(cfg.useRemoteGw?'✓':'✗')+' · Allow forwarded ✓';
-    ['sT','sA','sB','rtTxt','rtTxtV','rtTxtB','pTxt'].forEach(k=>fitText($(k+i),262));
+    fitText($('sT'+i),180);
   });
-  $('gwrtTxt').textContent=cfg.dprGw&&cfg.gwSummary?'rt: /16 → FW · no peer rts':cfg.dprGw?'rt: peering rts off':cfg.gwSummary?'rt: 172.16/16 → FW':cfg.gwSubnetRt?'rt: spokes → FW':(cfg.vnra&&cfg.vnraGw)?'rt: spokes → VNRA':'no route table';fitText($('gwrtTxt'),104);
-  $('gwtTxt').textContent='gateway transit';fitText($('gwtTxt'),104);
+  $('gwrtTxt').textContent=cfg.dprGw&&cfg.gwSummary?'rt: /16 → FW · no peer rts':cfg.dprGw?'rt: peering rts off':cfg.gwSummary?'rt: 172.16/16 → FW':cfg.gwSubnetRt?'rt: spokes → FW':(cfg.vnra&&cfg.vnraGw)?'rt: spokes → VNRA':'no route table'  ;
+    $('gwtTxt').textContent='gateway transit';
   $('vnraSub').classList.toggle('nodep',!cfg.vnra);
   const mod=Object.keys(BASE).some(k=>BASE[k]!==cfg[k]);
   $('baseBadge').textContent=mod?'What-if configuration (modified)':'Baseline configuration';
