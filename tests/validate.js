@@ -51,6 +51,14 @@ reset({ dprSpoke: true });
 check('spoke DPR removes peering route', !ctx.api.TABLES.spoke1.routes.some(r => r.nh === 'VNetPeering'));
 check('spoke DPR Preview warning', has('spoke1', 'internet', 'Preview'));
 
+reset({ dprGw: true, dprDefFw: true });
+check('DPR + default->FW: onprem->spoke via fw', fwdNodes('onprem', 'spoke1').includes('fw') && delivered('onprem', 'spoke1'));
+reset({ dprGw: true, dprDefVnra: true, vnra: true });
+check('DPR + default->VNRA: onprem->spoke via vnra', fwdNodes('onprem', 'spoke1').includes('vnra') && delivered('onprem', 'spoke1'));
+reset({ dprSpoke: true, dprDefVnra: true, vnra: true });
+check('spoke DPR + default->VNRA replaces default-to-fw', ctx.api.TABLES.spoke1.routes.some(r => r.name === 'default-to-vnra') && !ctx.api.TABLES.spoke1.routes.some(r => r.name === 'default-to-fw'));
+check('spoke DPR + default->VNRA sends internet to vnra', analyze('spoke1', 'internet').f.nodes.includes('vnra'));
+
 reset({ udrOnpremToFw: true });
 check('192.168/16->FW asymmetry', has('spoke1', 'onprem', 'Asymmetric'));
 reset({ outage: 'circuit' });
