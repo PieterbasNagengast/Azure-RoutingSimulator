@@ -117,9 +117,13 @@ tr.used td{background:var(--warnbg);font-weight:600}
 .mx td.na{color:var(--muted)}
 .mx td.c:hover{outline:2px solid var(--fwd)}
 .mx td.selc{outline:2px solid var(--ink)}
-.mxwin{margin-block-start:12px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg)}
-.mxwin h3{margin:0}
-.mxwin .bar{margin-block-end:8px}
+.topowrap{position:relative}
+.mxwin{position:absolute;inset-block-start:6px;inset-inline-start:6px;z-index:5;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel);opacity:.96;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.mxwin h3{margin:0;font-size:12px}
+.mxwin .bar{margin-block-end:4px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.mxwin button{padding:2px 8px;font-size:11px}
+.mxwin table{font-size:11px}.mxwin th,.mxwin td{padding:2px 6px}
+.mxwin .note{margin:4px 0 0;font-size:10px}
 .tg{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-block-end:1px solid var(--line)}
 .tg:last-child{border:none}
 .tg input{margin-top:3px;inline-size:16px;block-size:16px}
@@ -144,7 +148,10 @@ tr.used td{background:var(--warnbg);font-weight:600}
   <div>
     <h1>Azure Hub &amp; Spoke — Interactive Traffic Flow Dashboard</h1>
   </div>
-  <button class="themebtn" id="btnTheme" type="button" aria-label="Toggle light or dark theme"></button>
+  <div class="controls">
+    <button class="cfgbtn" id="btnCfg" aria-expanded="false" aria-controls="drawer">⚙ Configuration<span class="dot" id="cfgDot" hidden></span></button>
+    <button class="cfgbtn" id="btnTheme" type="button" aria-label="Toggle light or dark theme"></button>
+  </div>
   <div class="kpis">
     <div class="kpi"><b>3</b><span>VNets</span></div>
     <div class="kpi" id="kOk"><b>–</b><span>Healthy flows</span></div>
@@ -157,9 +164,12 @@ tr.used td{background:var(--warnbg);font-weight:600}
   <div class="card stage">
     <div class="bar">
       <h2>Topology &amp; live traffic flow <span><span class="base" id="baseBadge">Baseline configuration</span></span></h2>
-      <div class="controls">
-        <button class="cfgbtn" id="btnCfg" aria-expanded="false" aria-controls="drawer">⚙ Configuration<span class="dot" id="cfgDot" hidden></span></button>
-      </div>
+    </div>
+    <div class="topowrap">
+    <div class="mxwin">
+      <div class="bar"><h3>Flow matrix</h3><div class="controls"><button class="primary" id="btnPlay" title="Replay the selected flow">▶</button><button id="btnOverview" title="Overview: private vs Internet">Overview</button></div></div>
+      <table class="mx"><thead id="mxHead"></thead><tbody id="mxBody"></tbody></table>
+      <p class="note">Click a cell to animate that flow.</p>
     </div>
     <svg id="topo" viewBox="0 18 1180 520" role="img" aria-label="Hub and spoke topology diagram">
       <defs>
@@ -169,6 +179,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
       <g id="nodes"></g>
       <g id="flows"></g>
     </svg>
+    </div>
     <div id="flowCls"></div>
     <div class="legend">
       <span><i style="background:var(--priv)"></i>Private traffic (direct, no firewall)</span>
@@ -179,11 +190,6 @@ tr.used td{background:var(--warnbg);font-weight:600}
       <span><i style="background:var(--erb)"></i>ExpressRoute</span>
       <span><i style="background:var(--muted)"></i>VNet peering (dashed)</span>
       <span>Click any spoke, the firewall, the gateway, the circuit or on-prem to view its effective routes.</span>
-    </div>
-    <div class="mxwin">
-      <div class="bar"><h3>Flow matrix</h3><div class="controls"><button class="primary" id="btnPlay">▶ Replay flow</button><button id="btnOverview">Overview: private vs Internet</button></div></div>
-      <table class="mx"><thead id="mxHead"></thead><tbody id="mxBody"></tbody></table>
-      <p class="note">Rows = source, columns = destination. Click a cell to animate that flow.</p>
     </div>
   </div>
   <div class="card">
