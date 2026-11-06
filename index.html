@@ -21,6 +21,7 @@ h1{font-size:20px;margin:0}
 .kpi b{display:block;font-size:18px}
 .kpi span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .kpi.warn b{color:var(--warn)}.kpi.err b{color:var(--err)}.kpi.ok b{color:var(--ok)}
+button.kpibtn{border-radius:8px;padding:6px 12px;min-inline-size:110px;font-size:13px;font-weight:600;border:none;display:flex;align-items:center;justify-content:center}
 main{padding:8px 10px;transition:margin-inline-end .2s}
 body.cfgopen main{margin-inline-end:430px}
 @media (max-width:1100px){body.cfgopen main{margin-inline-end:0}}
@@ -148,16 +149,14 @@ tr.used td{background:var(--warnbg);font-weight:600}
   <div>
     <h1>Azure Hub &amp; Spoke — Interactive Traffic Flow Dashboard</h1>
   </div>
-  <div class="controls">
-    <button class="cfgbtn" id="btnCfg" aria-expanded="false" aria-controls="drawer">⚙ Configuration<span class="dot" id="cfgDot" hidden></span></button>
-    <button class="cfgbtn" id="btnTheme" type="button" aria-label="Toggle light or dark theme"></button>
-  </div>
   <div class="kpis">
     <div class="kpi"><b>3</b><span>VNets</span></div>
     <div class="kpi" id="kOk"><b>–</b><span>Healthy flows</span></div>
     <div class="kpi warn" id="kHp"><b>–</b><span>ER hairpins</span></div>
     <div class="kpi err" id="kAs"><b>–</b><span>Asymmetric</span></div>
     <div class="kpi err" id="kDr"><b>–</b><span>Dropped</span></div>
+    <button class="cfgbtn kpibtn" id="btnCfg" aria-expanded="false" aria-controls="drawer">⚙ Configuration<span class="dot" id="cfgDot" hidden></span></button>
+    <button class="cfgbtn kpibtn" id="btnTheme" type="button" aria-label="Toggle light or dark theme"></button>
   </div>
 </header>
 <main>
