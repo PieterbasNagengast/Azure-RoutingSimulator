@@ -263,7 +263,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
 <script>
 const FW_IP='172.16.0.68';
 const VNRA_IP='172.16.0.132';
-const BASE={defaultToFw:true,propagate:true,useRemoteGw:true,udrSpokeToFw:false,udrOnpremToFw:false,gwSubnetRt:false,gwSummary:false,dprGw:false,dprSpoke:false,fastpath:false,fpSku:true,erDirect:false,vnra:false,vnraSpoke:false,vnraOnprem:false,vnraGw:false,spoke1Only:false,privateSubnet:true,outage:'none'};
+const BASE={defaultToFw:true,propagate:true,useRemoteGw:true,udrSpokeToFw:false,udrOnpremToFw:false,gwSubnetRt:false,gwSummary:false,dprGw:false,dprSpoke:false,dprDefFw:false,dprDefVnra:false,fastpath:false,fpSku:true,erDirect:false,vnra:false,vnraSpoke:false,vnraOnprem:false,vnraGw:false,spoke1Only:false,privateSubnet:true,outage:'none'};
 const fpOn=()=>!!(cfg.fastpath&&cfg.fpSku&&cfg.erDirect);
 const on=(i,k)=>!!cfg[k]&&(!cfg.spoke1Only||i===1);
 const OUT={none:'',link:'primary ER link down',circuit:'ExpressRoute circuit down',gateway:'ExpressRoute Gateway down'};
@@ -295,6 +295,8 @@ function buildTables(){
     if(cfg.vnra&&on(i,'vnraSpoke'))r.push({src:'User',prefix:'172.16.0.0/16',nh:'VirtualAppliance',ip:VNRA_IP,name:'azure-to-vnra'});
     if(cfg.vnra&&on(i,'vnraOnprem'))r.push({src:'User',prefix:'192.168.0.0/16',nh:'VirtualAppliance',ip:VNRA_IP,name:'onprem-to-vnra'});
     if(on(i,'udrOnpremToFw'))r.push({src:'User',prefix:'192.168.0.0/16',nh:'VirtualAppliance',ip:FW_IP,name:'onprem-to-fw'});
+    if(on(i,'dprSpoke')&&cfg.dprDefVnra&&cfg.vnra){const k=r.findIndex(x=>x.name==='default-to-fw');if(k>=0)r.splice(k,1);r.push({src:'User',prefix:'0.0.0.0/0',nh:'VirtualAppliance',ip:VNRA_IP,name:'default-to-vnra'});}
+    else if(on(i,'dprSpoke')&&cfg.dprDefFw&&!r.some(x=>x.name==='default-to-fw'))r.push({src:'User',prefix:'0.0.0.0/0',nh:'VirtualAppliance',ip:FW_IP,name:'default-to-fw'});
     T['spoke'+i]={title:'vnet-spoke-0'+i+' / snet-app (rt-spoke-0'+i+', gateway route propagation '+((cfg.propagate)?'ON':'OFF')+(on(i,'dprSpoke')?', peering routes DISABLED':'')+')',routes:finalize(r)};
   });
   const peer=()=>SPOKES.map(i=>({src:'Default',prefix:'172.16.'+i+'.0/24',nh:'VNetPeering',to:'spoke'+i}));
@@ -304,6 +306,8 @@ function buildTables(){
   if(cfg.vnra&&cfg.vnraGw)SPOKES.forEach(i=>g.push({src:'User',prefix:'172.16.'+i+'.0/24',nh:'VirtualAppliance',ip:VNRA_IP,name:'spoke'+i+'-to-vnra'}));
   if(cfg.gwSubnetRt)SPOKES.forEach(i=>g.push({src:'User',prefix:'172.16.'+i+'.0/24',nh:'VirtualAppliance',ip:FW_IP,name:'spoke'+i+'-to-fw'}));
   if(cfg.gwSummary)g.push({src:'User',prefix:'172.16.0.0/16',nh:'VirtualAppliance',ip:FW_IP,name:'azure-summary-to-fw'});
+  if(cfg.dprGw&&cfg.dprDefVnra&&cfg.vnra)g.push({src:'User',prefix:'0.0.0.0/0',nh:'VirtualAppliance',ip:VNRA_IP,name:'default-to-vnra'});
+  else if(cfg.dprGw&&cfg.dprDefFw)g.push({src:'User',prefix:'0.0.0.0/0',nh:'VirtualAppliance',ip:FW_IP,name:'default-to-fw'});
   const gwRt=cfg.gwSubnetRt||cfg.gwSummary||cfg.dprGw||(cfg.vnra&&cfg.vnraGw);
   T.gw={title:'vnet-hub / GatewaySubnet (traffic arriving from ExpressRoute'+(fpOn()?', FastPath: gateway bypassed in the data path':'')+')'+(gwRt?' — rt-gatewaysubnet'+(cfg.dprGw?' (peering routes DISABLED)':''):' (no route table)'),routes:finalize(g)};
   const azW=!hybridUp();const az=[{src:'Advertised by ER Gateway',prefix:'172.16.0.0/24',nh:'Azure',w:azW}];
@@ -746,6 +750,8 @@ const TOG=[
  ['#','Disable peering route propagation (preview)'],
  ['dprGw','GatewaySubnet route table: disable peering route propagation','Route table property disablePeeringRoute = All ("Enable peering routes" cleared). Suppresses the system peering routes to the spokes so a summarized UDR wins. Creates no replacement route: without a UDR on-prem → spoke is dropped. Supported scenario — gateway and firewall are in the same (hub) VNet.','prev'],
  ['dprSpoke','Spoke route tables: disable peering route propagation','Removes the spoke → hub peering route. During preview the Azure Firewall/NVA next hop must be in the SAME VNet as the source NIC; a hub firewall used from a spoke is NOT supported, so flows get a warning.','prev'],
+ ['dprDefFw','Add default route 0.0.0.0/0 → Azure Firewall to the route tables with peering routes disabled','Catch-all replacement for the suppressed peering routes: every destination not covered by a more specific route (including the hub and spokes) goes to the firewall. Applies to the GatewaySubnet and/or spoke route tables that have "disable peering route propagation" on. Note: Microsoft advises against a 0.0.0.0/0 UDR on the GatewaySubnet; prefer the summarized /16.'],
+ ['dprDefVnra','Add default route 0.0.0.0/0 → Routing Appliance (VNRA) instead','Same, but the next hop is the VNRA (requires the VNRA below). Replaces a default-to-firewall UDR on the affected spoke route tables.'],
  ['#','ExpressRoute FastPath'],
  ['fastpath','Enable FastPath on the ExpressRoute connection','Traffic from on-prem goes from the MSEE directly to the VM, bypassing the gateway data path. Reaching peered spokes and honoring UDRs requires ExpressRoute Direct and an Ultra Performance / ErGw3AZ / ErGwScale (10+ units) gateway. Not supported to ILBs/PaaS in spokes.'],
  ['erDirect','Circuit is ExpressRoute Direct','OFF = provider circuit: FastPath only reaches VMs in the hub VNet, so spoke traffic still crosses the gateway.'],
@@ -755,8 +761,8 @@ const TOG=[
  ['vnraSpoke','Spoke UDR 172.16.0.0/16 → VNRA','Spoke-to-spoke via the routing appliance (removes the ER hairpin).'],
  ['vnraOnprem','Spoke UDR 192.168.0.0/16 → VNRA','Spoke-to-on-prem via the routing appliance.'],
  ['vnraGw','GatewaySubnet route table: spoke /24s → VNRA','On-prem-to-spoke via the routing appliance (needed for symmetry). Keep "Propagate gateway routes" ON on the GatewaySubnet route table.']];
-const CONFLICT={udrSpokeToFw:'vnraSpoke',vnraSpoke:'udrSpokeToFw',udrOnpremToFw:'vnraOnprem',vnraOnprem:'udrOnpremToFw',gwSubnetRt:'vnraGw',vnraGw:'gwSubnetRt'};
-const VSUB=['vnraSpoke','vnraOnprem','vnraGw'];
+const CONFLICT={dprDefFw:'dprDefVnra',dprDefVnra:'dprDefFw',udrSpokeToFw:'vnraSpoke',vnraSpoke:'udrSpokeToFw',udrOnpremToFw:'vnraOnprem',vnraOnprem:'udrOnpremToFw',gwSubnetRt:'vnraGw',vnraGw:'gwSubnetRt'};
+const VSUB=['vnraSpoke','vnraOnprem','vnraGw','dprDefVnra'];
 const FSUB=['erDirect','fpSku'];
 function buildToggles(){
   const c=$('toggles');c.innerHTML='';
@@ -766,7 +772,7 @@ function buildToggles(){
     if(VSUB.includes(k)){i.disabled=!cfg.vnra;w.style.paddingInlineStart='22px';if(!cfg.vnra)w.style.opacity='.5';}
     if(FSUB.includes(k)){i.disabled=!cfg.fastpath;w.style.paddingInlineStart='22px';if(!cfg.fastpath)w.style.opacity='.5';}
     i.addEventListener('change',()=>{cfg[k]=i.checked;if(i.checked&&CONFLICT[k]&&(k.startsWith('vnra')?cfg.vnra:true))cfg[CONFLICT[k]]=false;
-      if(k==='vnra'&&i.checked&&!VSUB.some(x=>cfg[x])){VSUB.forEach(x=>{cfg[x]=true;cfg[CONFLICT[x]]=false;});}
+      if(k==='vnra'&&i.checked&&!VSUB.some(x=>cfg[x])){['vnraSpoke','vnraOnprem','vnraGw'].forEach(x=>{cfg[x]=true;cfg[CONFLICT[x]]=false;});}
       if(k==='fastpath'&&i.checked){cfg.erDirect=true;cfg.fpSku=true;}
       buildToggles();recompute(true);});
     const s=document.createElement('div');s.innerHTML='<b></b><small></small>';const b=s.querySelector('b');b.textContent=l;if(fl==='prev'){const p=document.createElement('span');p.className='badge-prev';p.textContent='PREVIEW';b.appendChild(p);}s.querySelector('small').textContent=d;w.appendChild(i);w.appendChild(s);c.appendChild(w);});
