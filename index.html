@@ -117,6 +117,9 @@ tr.used td{background:var(--warnbg);font-weight:600}
 .mx td.na{color:var(--muted)}
 .mx td.c:hover{outline:2px solid var(--fwd)}
 .mx td.selc{outline:2px solid var(--ink)}
+.mxwin{margin-block-start:12px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg)}
+.mxwin h3{margin:0}
+.mxwin .bar{margin-block-end:8px}
 .tg{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-block-end:1px solid var(--line)}
 .tg:last-child{border:none}
 .tg input{margin-top:3px;inline-size:16px;block-size:16px}
@@ -140,7 +143,6 @@ tr.used td{background:var(--warnbg);font-weight:600}
 <header>
   <div>
     <h1>Azure Hub &amp; Spoke — Interactive Traffic Flow Dashboard</h1>
-    <div class="sub">Address pool 172.16.0.0/16 · Hub 172.16.0.0/24 · 2 spokes 172.16.1.0/24 &amp; 172.16.2.0/24 · On-prem 192.168.0.0/16 via ExpressRoute (RFC1918 advertised)</div>
   </div>
   <button class="themebtn" id="btnTheme" type="button" aria-label="Toggle light or dark theme"></button>
   <div class="kpis">
@@ -159,15 +161,6 @@ tr.used td{background:var(--warnbg);font-weight:600}
         <button class="cfgbtn" id="btnCfg" aria-expanded="false" aria-controls="drawer">⚙ Configuration<span class="dot" id="cfgDot" hidden></span></button>
       </div>
     </div>
-    <div class="controls" style="margin-block-end:8px">
-      <label>From <select id="selSrc"></select></label>
-      <label>To <select id="selDst"></select></label>
-      <button class="primary" id="btnPlay">▶ Play flow</button>
-      <button id="btnOverview">Overview: private vs Internet</button>
-      <label class="speed"><input type="checkbox" id="chkRet" checked> Animate return path</label>
-      <label class="speed">Speed <input type="range" id="rngSpeed" min="0.4" max="2.5" step="0.1" value="1"></label>
-    </div>
-    <div class="controls" id="presets" style="margin-block-end:8px"></div>
     <svg id="topo" viewBox="0 18 1180 520" role="img" aria-label="Hub and spoke topology diagram">
       <defs>
         <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
@@ -187,12 +180,16 @@ tr.used td{background:var(--warnbg);font-weight:600}
       <span><i style="background:var(--muted)"></i>VNet peering (dashed)</span>
       <span>Click any spoke, the firewall, the gateway, the circuit or on-prem to view its effective routes.</span>
     </div>
+    <div class="mxwin">
+      <div class="bar"><h3>Flow matrix</h3><div class="controls"><button class="primary" id="btnPlay">▶ Replay flow</button><button id="btnOverview">Overview: private vs Internet</button></div></div>
+      <table class="mx"><thead id="mxHead"></thead><tbody id="mxBody"></tbody></table>
+      <p class="note">Rows = source, columns = destination. Click a cell to animate that flow.</p>
+    </div>
   </div>
   <div class="card">
     <div class="tabs" id="tabs" role="tablist">
       <button class="sel" data-pane="pFlow">Flow analysis</button>
       <button data-pane="pRoutes">Effective routes</button>
-      <button data-pane="pMatrix">Flow matrix</button>
       <button data-pane="pDesign">Baseline design &amp; IP plan</button>
     </div>
     <div class="pane sel" id="pFlow">
@@ -210,11 +207,6 @@ tr.used td{background:var(--warnbg);font-weight:600}
       <div class="note" id="rtTitle"></div>
       <div class="rt"><table><thead><tr><th>Source</th><th>State</th><th>Prefix</th><th>Next hop type</th><th>Next hop IP</th></tr></thead><tbody id="rtBody"></tbody></table></div>
       <p class="note">Highlighted rows are used by the selected flow. Azure picks the longest prefix match; for identical prefixes, User &gt; BGP (Virtual network gateway) &gt; System.</p>
-    </div>
-    <div class="pane" id="pMatrix">
-      <h2>Flow matrix</h2>
-      <table class="mx" style="max-width:640px"><thead id="mxHead"></thead><tbody id="mxBody"></tbody></table>
-      <p class="note">Rows = source, columns = destination. Click a cell to animate that flow.</p>
     </div>
     <div class="pane" id="pDesign">
     <div class="cols2"><div>
@@ -682,11 +674,7 @@ const DST_OPTS=['spoke1','spoke2','onprem','internet'];
 let cur={src:'spoke1',dst:'spoke2'};let res=null;let anim=null;
 function valid(s,d){return s!==d&&!(s==='onprem'&&d==='internet');}
 function fillSelects(){
-  SRC_OPTS.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=EP[s].label+' ('+EP[s].ip+')';$('selSrc').appendChild(o);});
-  DST_OPTS.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=EP[s].label+' ('+EP[s].ip+')';$('selDst').appendChild(o);});
   [['spoke1','fw','Spoke 1 (snet-app)'],['spoke2','',''],['fw','','Azure Firewall subnet'],['vnra','','Routing Appliance subnet (VNRA)'],['gw','','GatewaySubnet (ER ingress)'],['msee','','ER circuit (MSEE)'],['onprem','','On-prem router']].forEach(([k,_,l])=>{const o=document.createElement('option');o.value=k;o.textContent=l||NAME[k];$('selTable').appendChild(o);});
-  const P=[['spoke1','internet','Spoke 1 → Internet'],['spoke1','onprem','Spoke 1 → On-prem'],['onprem','spoke2','On-prem → Spoke 2'],['spoke1','spoke2','Spoke 1 → Spoke 2'],['spoke2','internet','Spoke 2 → Internet']];
-  P.forEach(([s,d,l])=>{const b=document.createElement('button');b.className='preset';b.textContent=l;b.dataset.s=s;b.dataset.d=d;b.addEventListener('click',()=>select(s,d,true));$('presets').appendChild(b);});
 }
 const TOG=[
  ['#','Spoke baseline'],
@@ -810,7 +798,7 @@ function dropMsg(p,who){const h=p.hops[p.hops.length-1];
 function play(){
   stopAnim();const F=$('flows');
   const legs=[{p:res.f,ret:false,off:-4,c:legClass(res.src,res.dst,res.f),gh:res.ghost&&res.ghost.f}];
-  if(($('chkRet').checked||res.f.status==='delivered'&&res.r&&res.r.status==='dropped')&&res.r)legs.push({p:res.r,ret:true,off:5,c:legClass(res.src,res.dst,res.r),gh:res.ghost&&res.ghost.r});
+  if(res.r)legs.push({p:res.r,ret:true,off:5,c:legClass(res.src,res.dst,res.r),gh:res.ghost&&res.ghost.r});
   // Asymmetric through Azure Firewall: play the TCP handshake and stop where the firewall drops it
   const fa=res.W.find(w=>w.tag==='Asymmetric'&&w.dev==='fw');
   if(fa&&res.r&&res.f.status==='delivered'&&res.r.status==='delivered'){
@@ -837,7 +825,7 @@ function play(){
     const l=legs[li];
     const col=getComputedStyle(document.body).getPropertyValue('--'+l.c);
     if(!t0){t0=ts;l.path.setAttribute('opacity',1);l.glow.setAttribute('opacity',1);if(!l.ret)clearActive();document.documentElement.style.setProperty('--hl',col);}
-    const sp=Number($('rngSpeed').value)*240;const d=Math.min((ts-t0)/1000*sp,l.len);
+    const sp=240;const d=Math.min((ts-t0)/1000*sp,l.len);
     const pt=l.path.getPointAtLength(d);pk.setAttribute('cx',pt.x);pk.setAttribute('cy',pt.y);pk.setAttribute('fill',col);
     plbl.textContent=l.pkt||'';plbl.setAttribute('x',pt.x+10);plbl.setAttribute('y',pt.y-10);
     let idx=0;while(idx<l.marks.length&&l.marks[idx]<=d+2)idx++;
@@ -875,8 +863,7 @@ function overview(){
   $('flowTitle').textContent='Overview — every spoke to on-prem (private) and to the Internet (public)';
 }
 function select(s,d,go){
-  if(!valid(s,d))return;cur={src:s,dst:d};$('selSrc').value=s;$('selDst').value=d;
-  document.querySelectorAll('#presets .preset').forEach(b=>b.classList.toggle('sel',b.dataset.s===s&&b.dataset.d===d));
+  if(!valid(s,d))return;cur={src:s,dst:d};
   const gh=healthyPaths(s,d);res=analyze(s,d);res.ghost=gh;renderWarns();renderList('fwdList',res.f);renderList('retList',res.r);
   const fa=res.W.find(w=>w.tag==='Asymmetric'&&w.dev==='fw');
   if(fa){const viaF=res.f.nodes.includes('fw');const li=document.createElement('li');li.className='stopnote';
@@ -887,9 +874,7 @@ function select(s,d,go){
 function recompute(go){buildTables();refreshLabels();select(cur.src,cur.dst,go);}
 function init(){
   drawTopo();fillSelects();buildToggles();
-  $('btnPlay').addEventListener('click',()=>{const s=$('selSrc').value,d=$('selDst').value;if(!valid(s,d)){alert('Choose a different source and destination (on-prem Internet breakout is out of scope).');return;}select(s,d,true);});
-  $('selSrc').addEventListener('change',()=>{const s=$('selSrc').value,d=$('selDst').value;if(valid(s,d))select(s,d,false);});
-  $('selDst').addEventListener('change',()=>{const s=$('selSrc').value,d=$('selDst').value;if(valid(s,d))select(s,d,false);});
+  $('btnPlay').addEventListener('click',()=>select(cur.src,cur.dst,true));
   $('selTable').addEventListener('change',renderRoutes);
   $('btnOverview').addEventListener('click',overview);
   $('btnReset').addEventListener('click',()=>{Object.assign(cfg,BASE);buildToggles();recompute(true);});
@@ -904,7 +889,7 @@ function init(){
   paintTheme();
   ['tabs'].forEach(id=>$(id).addEventListener('click',e=>{const b=e.target.closest('button[data-pane]');if(!b)return;
     [...$(id).children].forEach(x=>x.classList.toggle('sel',x===b));
-    ['pFlow','pRoutes','pMatrix','pDesign'].forEach(p=>$(p).classList.toggle('sel',p===b.dataset.pane));}));
+    ['pFlow','pRoutes','pDesign'].forEach(p=>$(p).classList.toggle('sel',p===b.dataset.pane));}));
     recompute(true);
 }
 init();
