@@ -21,7 +21,7 @@ h1{font-size:20px;margin:0}
 .kpi b{display:block;font-size:18px}
 .kpi span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .kpi.warn b{color:var(--warn)}.kpi.err b{color:var(--err)}.kpi.ok b{color:var(--ok)}
-button.kpibtn{border-radius:8px;padding:6px 12px;min-inline-size:110px;font-size:13px;font-weight:600;border:none;display:flex;align-items:center;justify-content:center}
+button.kpibtn{border-radius:8px;padding:6px 12px;min-inline-size:56px;font-size:20px;font-weight:600;border:none;display:flex;align-items:center;justify-content:center}
 main{padding:8px 10px;transition:margin-inline-end .2s}
 body.cfgopen main{margin-inline-end:430px}
 @media (max-width:1100px){body.cfgopen main{margin-inline-end:0}}
@@ -155,7 +155,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
     <div class="kpi warn" id="kHp"><b>–</b><span>ER hairpins</span></div>
     <div class="kpi err" id="kAs"><b>–</b><span>Asymmetric</span></div>
     <div class="kpi err" id="kDr"><b>–</b><span>Dropped</span></div>
-    <button class="cfgbtn kpibtn" id="btnCfg" aria-expanded="false" aria-controls="drawer">⚙ Configuration<span class="dot" id="cfgDot" hidden></span></button>
+    <button class="cfgbtn kpibtn" id="btnCfg" aria-expanded="false" aria-controls="drawer" title="Configuration" aria-label="Configuration">⚙<span class="dot" id="cfgDot" hidden></span></button>
     <button class="cfgbtn kpibtn" id="btnTheme" type="button" aria-label="Toggle light or dark theme"></button>
   </div>
 </header>
@@ -170,7 +170,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
       <table class="mx"><thead id="mxHead"></thead><tbody id="mxBody"></tbody></table>
       <p class="note">Click a cell to animate that flow.</p>
     </div>
-    <svg id="topo" viewBox="0 18 1180 520" role="img" aria-label="Hub and spoke topology diagram">
+    <svg id="topo" viewBox="0 18 1180 565" role="img" aria-label="Hub and spoke topology diagram">
       <defs>
         <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
@@ -533,68 +533,68 @@ const $=id=>document.getElementById(id);
 const NS='http://www.w3.org/2000/svg';
 function el(tag,attrs,parent,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!==undefined)e.textContent=text;if(parent)parent.appendChild(e);return e;}
 const SPY={1:250,2:450};
-const A={vnra:[717,425],onprem:[112,430],msee:[360,430],ergw:[560,430],fw:[712,300],internet:[712,78],hub:[640,250]};
+const A={vnra:[635,353],onprem:[112,488],msee:[360,488],ergw:[635,488],fw:[635,222],internet:[635,78],hub:[635,150]};
 SPOKES.forEach(i=>A['spoke'+i]=[1030,SPY[i]]);
 const J=i=>[800,Math.max(232,Math.min(492,SPY[i]))];
 function drawTopo(){
   const L=$('links'),N=$('nodes');L.innerHTML='';N.innerHTML='';
   // hub
-  el('rect',{x:470,y:210,width:330,height:300,rx:14,fill:'var(--hub)',stroke:'var(--hubb)',class:'vbox'},N);
-  el('text',{x:485,y:234,class:'lbl'},N,'vnet-hub · 172.16.0.0/24');
+  el('rect',{x:470,y:125,width:330,height:420,rx:14,fill:'var(--hub)',stroke:'var(--hubb)',class:'vbox'},N);
+  el('text',{x:485,y:146,class:'lbl'},N,'vnet-hub · 172.16.0.0/24');
   // fw subnet
-  el('rect',{x:640,y:248,width:150,height:110,rx:8,fill:'var(--panel)',stroke:'var(--line)'},N);
-  el('text',{x:648,y:264,class:'xs'},N,'AzureFirewallSubnet .64/26');
+  el('rect',{x:485,y:160,width:300,height:120,rx:8,fill:'var(--panel)',stroke:'var(--line)'},N);
+  el('text',{x:493,y:176,class:'xs'},N,'AzureFirewallSubnet .64/26');
   // gw subnet
-  el('rect',{x:485,y:372,width:150,height:126,rx:8,fill:'var(--panel)',stroke:'var(--line)'},N);
-  el('text',{x:493,y:388,class:'xs'},N,'GatewaySubnet .0/26');
+  el('rect',{x:485,y:424,width:300,height:112,rx:8,fill:'var(--panel)',stroke:'var(--line)'},N);
+  el('text',{x:493,y:440,class:'xs'},N,'GatewaySubnet .0/26');
   const gvs=el('g',{id:'vnraSub'},N);
-  el('rect',{x:645,y:372,width:145,height:108,rx:8,fill:'var(--panel)',stroke:'var(--line)'},gvs);
-  el('text',{x:651,y:388,class:'xs'},gvs,'VirtualNetworkApplianceSubnet');
+  el('rect',{x:485,y:292,width:300,height:120,rx:8,fill:'var(--panel)',stroke:'var(--line)'},gvs);
+  el('text',{x:493,y:308,class:'xs'},gvs,'VirtualNetworkApplianceSubnet');
   const gv=el('g',{class:'node',id:'n-vnra','data-t':'vnra'},gvs);
-  el('rect',{x:663,y:396,width:110,height:70,rx:10,class:'halo'},gv);
-  el('rect',{x:667,y:400,width:102,height:62,rx:8,fill:'var(--vnrabg)',stroke:'var(--vnra)',class:'vbox'},gv);
-  el('text',{x:718,y:423,'text-anchor':'middle',class:'lbl'},gv,'⇶ VNRA');
-  el('text',{x:718,y:439,'text-anchor':'middle',class:'xs'},gv,'Routing Appliance');
-  el('text',{x:718,y:452,'text-anchor':'middle',class:'xs'},gv,'.128/26 · 172.16.0.132');
+  el('rect',{x:580,y:318,width:110,height:70,rx:10,class:'halo'},gv);
+  el('rect',{x:584,y:322,width:102,height:62,rx:8,fill:'var(--vnrabg)',stroke:'var(--vnra)',class:'vbox'},gv);
+  el('text',{x:635,y:345,'text-anchor':'middle',class:'lbl'},gv,'⇶ VNRA');
+  el('text',{x:635,y:361,'text-anchor':'middle',class:'xs'},gv,'Routing Appliance');
+  el('text',{x:635,y:374,'text-anchor':'middle',class:'xs'},gv,'.128/26 · 172.16.0.132');
   // links
   SPOKES.forEach(i=>{const j=J(i);el('path',{d:`M${j[0]},${j[1]} L885,${SPY[i]}`,class:'link peer'},L);
     el('text',{x:830,y:(j[1]+SPY[i])/2-6,class:'xs'},L,'peering');});
-  el('path',{d:'M560,430 L360,430',class:'link erlink',id:'lnkC'},L);
-  el('path',{d:'M300,422 L205,422',class:'link erlink',id:'lnkP','stroke-width':2},L);
-  el('path',{d:'M300,440 L205,440',class:'link erlink',id:'lnkS','stroke-width':2},L);
+  el('path',{d:'M579,488 L420,488',class:'link erlink',id:'lnkC'},L);
+  el('path',{d:'M300,480 L205,480',class:'link erlink',id:'lnkP','stroke-width':2},L);
+  el('path',{d:'M300,498 L205,498',class:'link erlink',id:'lnkS','stroke-width':2},L);
 
 
   el('g',{id:'outg'},N.parentNode);
-  el('path',{d:'M712,300 L712,110',class:'link peer'},L);
-  el('text',{x:720,y:190,class:'xs'},L,'SNAT egress');
+  el('path',{d:'M635,188 L635,104',class:'link peer'},L);
+  el('text',{x:643,y:118,class:'xs'},L,'SNAT egress');
   // internet
-  const gi=el('g',{class:'node',id:'n-internet'},N);
+  const gi=el('g',{class:'node',id:'n-internet',transform:'translate(-78,0)'},N);
   el('path',{d:'M650,104 A22,22 0 0,1 652,62 A30,30 0 0,1 704,44 A34,34 0 0,1 768,58 A24,24 0 0,1 776,104 Z',class:'halo','stroke-width':6},gi);
   el('path',{d:'M650,104 A22,22 0 0,1 652,62 A30,30 0 0,1 704,44 A34,34 0 0,1 768,58 A24,24 0 0,1 776,104 Z',fill:'var(--net)',stroke:'var(--muted)',class:'vbox','stroke-linejoin':'round'},gi);
   el('text',{x:713,y:86,'text-anchor':'middle',class:'lbl'},gi,'🌐 Internet');
   // fw
   const gf=el('g',{class:'node',id:'n-fw','data-t':'fw'},N);
-  el('rect',{x:660,y:274,width:110,height:70,rx:10,class:'halo'},gf);
-  el('rect',{x:664,y:278,width:102,height:62,rx:8,fill:'var(--errbg)',stroke:'var(--fwc)',class:'vbox'},gf);
-  el('text',{x:715,y:303,'text-anchor':'middle',class:'lbl'},gf,'🔥 Azure Firewall');
-  el('text',{x:715,y:320,'text-anchor':'middle',class:'xs'},gf,'172.16.0.68');
-  el('text',{x:715,y:333,'text-anchor':'middle',class:'xs'},gf,'no route table');
+  el('rect',{x:580,y:186,width:110,height:70,rx:10,class:'halo'},gf);
+  el('rect',{x:584,y:190,width:102,height:62,rx:8,fill:'var(--errbg)',stroke:'var(--fwc)',class:'vbox'},gf);
+  el('text',{x:635,y:215,'text-anchor':'middle',class:'lbl'},gf,'🔥 Azure Firewall');
+  el('text',{x:635,y:232,'text-anchor':'middle',class:'xs'},gf,'172.16.0.68');
+  el('text',{x:635,y:245,'text-anchor':'middle',class:'xs'},gf,'no route table');
   // ergw
   const gg=el('g',{class:'node',id:'n-ergw','data-t':'gw'},N);
-  el('rect',{x:500,y:398,width:120,height:72,rx:10,class:'halo'},gg);
-  el('rect',{x:504,y:402,width:112,height:64,rx:8,fill:'var(--er)',stroke:'var(--erb)',class:'vbox'},gg);
-  el('text',{x:560,y:427,'text-anchor':'middle',class:'lbl'},gg,'⇄ ER Gateway');
-  el('text',{x:560,y:443,'text-anchor':'middle',class:'xs',id:'gwtTxt'},gg,'gateway transit');
-  el('text',{x:560,y:456,'text-anchor':'middle',class:'xs',id:'gwrtTxt'},gg,'no route table');
+  el('rect',{x:575,y:452,width:120,height:72,rx:10,class:'halo'},gg);
+  el('rect',{x:579,y:456,width:112,height:64,rx:8,fill:'var(--er)',stroke:'var(--erb)',class:'vbox'},gg);
+  el('text',{x:635,y:481,'text-anchor':'middle',class:'lbl'},gg,'⇄ ER Gateway');
+  el('text',{x:635,y:497,'text-anchor':'middle',class:'xs',id:'gwtTxt'},gg,'gateway transit');
+  el('text',{x:635,y:510,'text-anchor':'middle',class:'xs',id:'gwrtTxt'},gg,'no route table');
   // msee
-  const gm=el('g',{class:'node',id:'n-msee','data-t':'msee'},N);
+  const gm=el('g',{class:'node',id:'n-msee','data-t':'msee',transform:'translate(0,58)'},N);
   el('rect',{x:296,y:390,width:128,height:80,rx:12,class:'halo'},gm);
   el('rect',{x:300,y:394,width:120,height:72,rx:10,fill:'var(--er)',stroke:'var(--erb)',class:'vbox'},gm);
   el('text',{x:360,y:420,'text-anchor':'middle',class:'lbl'},gm,'ER Circuit');
   el('text',{x:360,y:436,'text-anchor':'middle',class:'xs'},gm,'MSEE @ peering');
   el('text',{x:360,y:449,'text-anchor':'middle',class:'xs'},gm,'location');
   // onprem
-  const go=el('g',{class:'node',id:'n-onprem','data-t':'onprem'},N);
+  const go=el('g',{class:'node',id:'n-onprem','data-t':'onprem',transform:'translate(0,58)'},N);
   el('rect',{x:16,y:346,width:193,height:168,rx:14,class:'halo'},go);
   el('rect',{x:20,y:350,width:185,height:160,rx:12,fill:'var(--onp)',stroke:'var(--onpb)',class:'vbox'},go);
   el('text',{x:32,y:375,class:'lbl'},go,'🏢 On-prem Datacenter');
@@ -616,7 +616,7 @@ function drawTopo(){
   });
 
   const LB=el('g',{id:'lblLayer'},null);$('topo').insertBefore(LB,$('flows'));
-  [[252,412,'Private peering'],[252,458,'primary / secondary'],[462,420,'ER connection']].forEach(([x,y,t])=>el('text',{x,y,'text-anchor':'middle',class:'xs lbltop'},LB,t));
+  [[252,470,'Private peering'],[252,516,'primary / secondary'],[500,478,'ER connection']].forEach(([x,y,t])=>el('text',{x,y,'text-anchor':'middle',class:'xs lbltop'},LB,t));
   document.querySelectorAll('#nodes .node').forEach(n=>n.addEventListener('click',()=>{const t=n.getAttribute('data-t');if(t){$('selTable').value=t;renderRoutes();}}));
 }
 function fitText(t,max){if(!t)return;t.removeAttribute('textLength');t.removeAttribute('lengthAdjust');try{if(t.getComputedTextLength()>max){t.setAttribute('textLength',max);t.setAttribute('lengthAdjust','spacingAndGlyphs');}}catch(e){}}
@@ -645,18 +645,18 @@ function pts(nodes,off){
   for(let k=0;k<nodes.length;k++){
     const n=nodes[k],p=nodes[k-1],nx=nodes[k+1];
     if(k>0){
-      const FJ=i=>SPY[i]>360?[[875,SPY[i]],[812,335]]:[J(i)];
+      const FJ=i=>SPY[i]>360?[[875,SPY[i]],[812,222]]:[J(i)];
       if(isS(p)&&n==='fw')FJ(+p.slice(5)).forEach(q=>P.push(q));
       if(p==='fw'&&isS(n))FJ(+n.slice(5)).slice().reverse().forEach(q=>P.push(q));
-      if(isS(p)&&n==='ergw'){P.push([860,SPY[+p.slice(5)]]);P.push([805,500]);P.push([630,503]);}
-      if(p==='ergw'&&isS(n)){P.push([630,503]);P.push([805,500]);P.push([860,SPY[+n.slice(5)]]);}
-      if(isS(p)&&n==='vnra'){P.push([860,SPY[+p.slice(5)]]);P.push([812,448]);}
-      if(p==='vnra'&&isS(n)){P.push([812,448]);P.push([860,SPY[+n.slice(5)]]);}
-      if(p==='fw'&&n==='ergw')P.push([637,365]);
-      if(p==='ergw'&&n==='fw')P.push([637,365]);
+      if(isS(p)&&n==='ergw'){P.push([860,SPY[+p.slice(5)]]);P.push([805,536]);P.push([640,536]);}
+      if(p==='ergw'&&isS(n)){P.push([640,536]);P.push([805,536]);P.push([860,SPY[+n.slice(5)]]);}
+      if(isS(p)&&n==='vnra'){P.push([860,SPY[+p.slice(5)]]);P.push([812,353]);}
+      if(p==='vnra'&&isS(n)){P.push([812,353]);P.push([860,SPY[+n.slice(5)]]);}
+      if(p==='fw'&&n==='ergw'){P.push([548,222]);P.push([548,488]);}
+      if(p==='ergw'&&n==='fw'){P.push([548,488]);P.push([548,222]);}
     }
     if(n==='msee'&&p==='ergw'&&nx&&nx!=='onprem'){ // hairpin U-turn around the MSEE
-      P.push([440,412]);P.push([330,400]);P.push([300,430]);P.push([330,460]);P.push([440,448]);continue;}
+      P.push([440,470]);P.push([330,458]);P.push([300,488]);P.push([330,518]);P.push([440,506]);continue;}
     P.push(A[n]);
   }
   // remove consecutive duplicates
@@ -889,7 +889,7 @@ function init(){
   document.addEventListener('keydown',e=>{if(e.key==='Escape')setCfg(false);});
   const themeBtn=$('btnTheme');
   const curTheme=()=>document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
-  const paintTheme=()=>{const t=curTheme();themeBtn.textContent=t==='dark'?'☀ Light':'🌙 Dark';themeBtn.setAttribute('aria-label','Switch to '+(t==='dark'?'light':'dark')+' theme');};
+  const paintTheme=()=>{const t=curTheme();themeBtn.textContent=t==='dark'?'☀':'🌙';themeBtn.title='Switch to '+(t==='dark'?'light':'dark')+' theme';themeBtn.setAttribute('aria-label',themeBtn.title);};
   themeBtn.addEventListener('click',()=>{const n=curTheme()==='dark'?'light':'dark';document.documentElement.dataset.theme=n;try{localStorage.setItem('theme',n);}catch(e){}paintTheme();});
   paintTheme();
   ['tabs'].forEach(id=>$(id).addEventListener('click',e=>{const b=e.target.closest('button[data-pane]');if(!b)return;
