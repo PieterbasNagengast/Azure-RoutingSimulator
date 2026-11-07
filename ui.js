@@ -24,7 +24,7 @@
   const C = { internet: [635, 52], onprem: [125, 545], msee: [370, 545], gw: [635, 545], fw: [635, 215], vnra: [635, 375], spoke1: [1055, 245], spoke2: [1055, 525] };
   const LINKS = {
     'onprem|msee': [[220, 545], [345, 545]],
-    'msee|gw': [[395, 545], [440, 545], [440, 573], [560, 573]],
+    'msee|gw': [[395, 545], [440, 545], [440, 559], [560, 559]],
     'gw|fw': [[560, 559], [475, 559], [475, 215], [560, 215]],
     'gw|vnra': [[560, 545], [485, 545], [485, 375], [560, 375]],
     'fw|vnra': [[635, 251], [635, 339]],
@@ -45,20 +45,36 @@
     if (LINKS[b + '|' + a]) return LINKS[b + '|' + a].slice().reverse();
     return null;
   }
-  const PILL = { fw: 1, vnra: 1, gw: 1 };
+  const PILL = { fw: 1, vnra: 1, gw: 1 }, LANE = 14;
+  const dyOf = (a, b) => C[b][1] - C[a][1];
+  const outLane = (a, b) => { const dy = dyOf(a, b); return Math.abs(dy) < 15 ? (C[b][0] > C[a][0] ? 1 : -1) : dy < 0 ? -1 : 1; };
+  const inLane = (a, b) => { const dy = dyOf(a, b); return Math.abs(dy) < 15 ? (C[b][0] > C[a][0] ? 1 : -1) : dy < 0 ? 1 : -1; };
   function pathFor(nodes) {
-    const seq = nodes.filter((n, i) => n !== 'hub' && n !== nodes[i - 1]), raw = [];
+    const seq = nodes.filter((n, i) => n !== 'hub' && n !== nodes[i - 1]), hops = [];
     for (let i = 1; i < seq.length; i++) {
-      const p = linkPts(seq[i - 1], seq[i]); if (!p) continue;
-      const last = raw[raw.length - 1], n = seq[i - 1];
-      if (last && PILL[n] && last[0] !== C[n][0] && p[0][0] !== C[n][0]) {
-        const cx = C[n][0], dir = last[0] > cx ? 1 : -1, ix = cx + dir * 55, o = p[0], od = o[0] > cx ? 1 : -1, ox = cx + od * 55;
-        raw.push([ix, last[1]]);
-        if (dir !== od) { const my = Math.max(last[1], o[1]); raw.push([ix, my], [ox, my]); }
-        raw.push([ox, last[1] === o[1] ? last[1] : o[1]]);
-      }
-      p.forEach(pt => raw.push(pt));
+      const l = linkPts(seq[i - 1], seq[i]); if (!l) continue;
+      hops.push({ a: seq[i - 1], b: seq[i], p: l.map(q => q.slice()), lo: outLane(seq[i - 1], seq[i]), li: inLane(seq[i - 1], seq[i]) });
     }
+    const sideOf = (n, pt) => pt[0] > C[n][0] ? 1 : -1;
+    for (let i = 1; i < hops.length; i++) {
+      const h = hops[i - 1], g = hops[i], n = h.b;
+      if (!PILL[n] || h.p[h.p.length - 1][0] === C[n][0] || g.p[0][0] === C[n][0]) continue;
+      if (sideOf(n, h.p[h.p.length - 1]) === sideOf(n, g.p[0]) && h.li === g.lo) { h.li = -1; g.lo = 1; }
+    }
+    hops.forEach(h => {
+      const p = h.p, n = p.length;
+      if (PILL[h.a] && p[0][0] !== C[h.a][0]) { const y = C[h.a][1] + h.lo * LANE; if (p[1][1] === p[0][1]) p[1][1] = y; p[0][1] = y; }
+      if (PILL[h.b] && p[n - 1][0] !== C[h.b][0]) { const y = C[h.b][1] + h.li * LANE; if (p[n - 2][1] === p[n - 1][1]) p[n - 2][1] = y; p[n - 1][1] = y; }
+    });
+    const raw = [];
+    hops.forEach(h => {
+      const last = raw[raw.length - 1], n = h.a, o = h.p[0];
+      if (last && PILL[n] && last[0] !== C[n][0] && o[0] !== C[n][0]) {
+        const ix = C[n][0] + (last[0] > C[n][0] ? 1 : -1) * 55, ox = C[n][0] + (o[0] > C[n][0] ? 1 : -1) * 55;
+        raw.push([ix, last[1]], [ox, last[1]], [ox, o[1]]);
+      }
+      h.p.forEach(pt => raw.push(pt));
+    });
     const out = [];
     raw.forEach(pt => {
       const l = out[out.length - 1];
@@ -67,8 +83,7 @@
       out.push(pt);
     });
     return out;
-  }
-  function offsetPts(pts, d) {
+  }    function offsetPts(pts, d) {
     const nrm = (a, b) => { const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l]; };
     const out = [];
     pts.forEach((p, i) => {
@@ -132,7 +147,7 @@
       el('rect', { class: 'shape subbox', x: 500, y, width: 270, height: 130, rx: 10 }, null, n);
       el('text', { class: 'sub', x: 635, y: y + 22 }, title, n);
       el('rect', { class: 'shape', x: 560, y: y + 29, width: 150, height: 72, rx: 20 }, null, n);
-      el('text', { class: 'lbl', x: 635, y: y + 49 }, glyph, n);
+      el('text', { class: 'lbl', x: 635, y: y + 69 }, glyph, n);
       el('text', { class: 'sub', x: 635, y: y + 124 }, sublabel, n);
     };
     sub('fw', 150, ap.fw.cidr, ap.fw.enabled ? ap.fw.ip + (ap.fw.snat ? ' · SNAT' : '') : 'not deployed', ap.fw.name, ap.fw.enabled);
@@ -141,7 +156,7 @@
     el('rect', { class: 'shape subbox', x: 500, y: 480, width: 270, height: 130, rx: 10 }, null, gwn);
     el('text', { class: 'sub', x: 635, y: 502 }, 'GatewaySubnet ' + hub.gw.cidr, gwn);
     el('rect', { class: 'shape', x: 560, y: 509, width: 150, height: 72, rx: 20 }, null, gwn);
-    el('text', { class: 'lbl', x: 635, y: 529 }, hub.gw.name, gwn);
+    el('text', { class: 'lbl', x: 635, y: 549 }, hub.gw.name, gwn);
     el('text', { class: 'sub', x: 635, y: 604 }, hub.gw.rt.disablePeering ? 'peering routes disabled (preview)' : 'GatewaySubnet', gwn);
 
     RS.SPOKES.forEach(id => {
@@ -178,7 +193,7 @@
   function drawPaths(a) {
     const g = $('#world');
     const add = (res, cls) => {
-      const pts = offsetPts(pathFor(res.nodes), 5);
+      const pts = offsetPts(pathFor(res.nodes), 4);
       if (pts.length < 2) return;
       const d = rounded(pts, 10);
       const pe = el('path', { class: 'path ' + cls + (res.status === 'dropped' ? ' dropped' : ''), d }); g.appendChild(pe);
