@@ -184,7 +184,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
       <table class="mx"><thead id="mxHead"></thead><tbody id="mxBody"></tbody></table>
       <p class="note">▶ Click any flow to animate it</p>
     </div>
-    <svg id="topo" viewBox="0 18 1140 565" role="img" aria-label="Hub and spoke topology diagram">
+    <svg id="topo" viewBox="-70 18 1210 565" role="img" aria-label="Hub and spoke topology diagram">
       <defs>
         <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
@@ -540,7 +540,7 @@ const $=id=>document.getElementById(id);
 const NS='http://www.w3.org/2000/svg';
 function el(tag,attrs,parent,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!==undefined)e.textContent=text;if(parent)parent.appendChild(e);return e;}
 const SPY={1:250,2:450};
-const A={vnra:[635,353],onprem:[112,488],msee:[360,488],ergw:[635,488],fw:[635,222],internet:[635,78],hub:[635,150]};
+const A={vnra:[635,353],onprem:[42,488],msee:[290,488],ergw:[635,488],fw:[635,222],internet:[635,78],hub:[635,150]};
 SPOKES.forEach(i=>A['spoke'+i]=[1030,SPY[i]]);
 const J=i=>[800,Math.max(232,Math.min(492,SPY[i]))];
 function drawTopo(){
@@ -565,9 +565,9 @@ function drawTopo(){
   el('text',{class:'xs dtl'},gv,'.128/26 · 172.16.0.132');
   // links
   SPOKES.forEach(i=>{el('path',{d:`M800,${SPY[i]} L930,${SPY[i]}`,class:'link peer'},L);el('text',{x:865,y:SPY[i]-6,'text-anchor':'middle',class:'xs'},L,'peering');});
-  el('path',{d:'M579,488 L420,488',class:'link erlink',id:'lnkC'},L);
-  el('path',{d:'M300,480 L205,480',class:'link erlink',id:'lnkP','stroke-width':2},L);
-  el('path',{d:'M300,498 L205,498',class:'link erlink',id:'lnkS','stroke-width':2},L);
+  el('path',{d:'M579,488 L324,488',class:'link erlink',id:'lnkC'},L);
+  el('path',{d:'M135,480 L267,480',class:'link erlink',id:'lnkP','stroke-width':2},L);
+  el('path',{d:'M135,498 L244,498',class:'link erlink',id:'lnkS','stroke-width':2},L);
 
 
   el('g',{id:'outg'},N.parentNode);
@@ -593,13 +593,13 @@ function drawTopo(){
   el('text',{class:'xs dtl',id:'gwtTxt'},gg,'gateway transit');
   el('text',{class:'xs dtl',id:'gwrtTxt'},gg,'no route table');
   // msee
-  const gm=el('g',{class:'node',id:'n-msee','data-t':'msee',transform:'translate(0,58)'},N);
+  const gm=el('g',{class:'node',id:'n-msee','data-t':'msee',transform:'translate(-70,58)'},N);
   el('path',{d:'M360,398 L430,456 L290,456 Z','stroke-linejoin':'round',class:'halo'},gm);
   el('path',{d:'M360,404 L422,452 L298,452 Z','stroke-linejoin':'round',fill:'var(--er)',stroke:'var(--erb)',class:'vbox'},gm);
   el('text',{x:360,y:445,'text-anchor':'middle',class:'lbl'},gm,'ER Circuit');
   el('text',{class:'xs dtl'},gm,'MSEE @ peering location');
   // onprem
-  const go=el('g',{class:'node',id:'n-onprem','data-t':'onprem',transform:'translate(0,58)'},N);
+  const go=el('g',{class:'node',id:'n-onprem','data-t':'onprem',transform:'translate(-70,58)'},N);
   el('rect',{x:16,y:403,width:193,height:54,rx:14,class:'halo'},go);
   el('rect',{x:20,y:407,width:185,height:46,rx:12,fill:'var(--onp)',stroke:'var(--onpb)',class:'vbox'},go);
   el('text',{x:32,y:435,class:'lbl'},go,'🏢 On-prem Datacenter');
@@ -621,7 +621,7 @@ function drawTopo(){
   });
 
   const LB=el('g',{id:'lblLayer'},null);$('topo').insertBefore(LB,$('flows'));
-  [[252,470,'Private peering'],[252,516,'primary / secondary'],[500,462,'ER connection']].forEach(([x,y,t])=>el('text',{x,y,'text-anchor':'middle',class:'xs lbltop'},LB,t));
+  [[200,470,'Private peering'],[175,518,'primary / secondary'],[415,528,'ER connection']].forEach(([x,y,t])=>el('text',{x,y,'text-anchor':'middle',class:'xs lbltop'},LB,t));
   let tip=$('tip');if(!tip){tip=document.createElement('div');tip.id='tip';tip.hidden=true;document.body.appendChild(tip);}
   document.querySelectorAll('#nodes .node').forEach(n=>{
     n.addEventListener('mouseenter',()=>{
