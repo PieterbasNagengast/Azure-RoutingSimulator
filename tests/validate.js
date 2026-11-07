@@ -46,5 +46,21 @@ check('DPR + default->VNRA: onprem->spoke via vnra', fwdNodes('onprem', 'spoke1'
 reset({ udrOnpremToFw: true });
 check('192.168/16->FW asymmetry', has('spoke1', 'onprem', 'Asymmetric'));
 
+reset();
+check('baseline spoke1->spoke2 hairpins', has('spoke1', 'spoke2', 'Hairpin'));
+reset({ erPfx: '192.168.0.0/16' });
+check('custom ER prefix 192.168/16 only: no hairpin', !has('spoke1', 'spoke2', 'Hairpin'));
+check('custom ER prefix 192.168/16 only: spoke->onprem still works', delivered('spoke1', 'onprem') || analyze('spoke1', 'onprem').f.status === 'delivered');
+reset({ erPfx: '192.168.0.0/16, 192.168.0.0/16, junk, 300.1.1.1/8' });
+check('invalid and duplicate CIDRs ignored', !has('spoke1', 'spoke2', 'Hairpin'));
+reset({ spokeAccess: false });
+check('spoke access off: spoke1->onprem dropped', analyze('spoke1', 'onprem').f.status === 'dropped');
+reset({ hubAccess: false });
+check('hub access off: onprem->spoke1 dropped', analyze('onprem', 'spoke1').f.status === 'dropped');
+reset({ hubGwTransit: false });
+check('gateway transit off: spoke gets no ER routes', analyze('spoke1', 'onprem').f.status === 'dropped' || has('spoke1', 'onprem', 'Dropped'));
+reset({ spokeFwd: false, udrSpokeToFw: true });
+check('spoke forwarded traffic off: fw->spoke dropped', analyze('spoke2', 'spoke1').f.status === 'dropped');
+
 console.log(failed ? `\n${failed} FAILED` : '\nAll passed');
 process.exit(failed ? 1 : 0);
