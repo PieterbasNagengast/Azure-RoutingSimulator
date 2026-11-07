@@ -583,7 +583,7 @@ function drawTopo(){
   const gf=el('g',{class:'node',id:'n-fw','data-t':'fw'},N);
   el('rect',{x:580,y:200,width:110,height:44,rx:10,class:'halo'},gf);
   el('rect',{x:584,y:204,width:102,height:36,rx:8,fill:'var(--errbg)',stroke:'var(--fwc)',class:'vbox'},gf);
-  el('text',{x:635,y:227,'text-anchor':'middle',class:'lbl'},gf,'🔥 Azure Firewall');
+  el('text',{x:635,y:227,'text-anchor':'middle',class:'lbl'},gf,'Azure Firewall');
   el('text',{class:'xs dtl'},gf,'172.16.0.68');
   el('text',{class:'xs dtl'},gf,'no route table');
   // ergw
@@ -595,9 +595,9 @@ function drawTopo(){
   el('text',{class:'xs dtl',id:'gwrtTxt'},gg,'no route table');
   // msee
   const gm=el('g',{class:'node',id:'n-msee','data-t':'msee',transform:'translate(0,58)'},N);
-  el('rect',{x:296,y:408,width:128,height:44,rx:12,class:'halo'},gm);
-  el('rect',{x:300,y:412,width:120,height:36,rx:10,fill:'var(--er)',stroke:'var(--erb)',class:'vbox'},gm);
-  el('text',{x:360,y:435,'text-anchor':'middle',class:'lbl'},gm,'ER Circuit');
+  el('path',{d:'M360,398 L430,456 L290,456 Z','stroke-linejoin':'round',class:'halo'},gm);
+  el('path',{d:'M360,404 L422,452 L298,452 Z','stroke-linejoin':'round',fill:'var(--er)',stroke:'var(--erb)',class:'vbox'},gm);
+  el('text',{x:360,y:445,'text-anchor':'middle',class:'lbl'},gm,'ER Circuit');
   el('text',{class:'xs dtl'},gm,'MSEE @ peering location');
   // onprem
   const go=el('g',{class:'node',id:'n-onprem','data-t':'onprem',transform:'translate(0,58)'},N);
