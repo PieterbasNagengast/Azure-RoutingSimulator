@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Azure Hub &amp; Spoke Routing Simulator</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Azure Hub &amp; Spoke <span>Routing Simulator</span></h1>
+  <select id="preset" title="Load a scenario"></select>
+  <span id="pdesc" class="muted"></span>
+  <span class="sp"></span>
+  <span id="vchip" class="chip" hidden></span>
+  <button id="bShare" title="Copy a link containing this scenario">Share</button>
+  <button id="bExport">Export</button>
+  <button id="bImport">Import</button>
+  <button id="bReset">Reset</button>
+  <button id="bTheme" title="Toggle theme">◐</button>
+  <input type="file" id="fImport" accept=".json,application/json" hidden>
+</header>
+<section id="flowbar">
+  <label>From <select id="fSrc"></select></label>
+  <label>Source IP <input id="fSrcIp" size="15"></label>
+  <span class="arrow">→</span>
+  <label>Destination IP <input id="fDstIp" size="15" list="dstList"></label>
+  <datalist id="dstList"></datalist>
+  <span class="quick" id="quick"></span>
+  <span class="sp"></span>
+  <span id="verdict" class="badge"></span>
+</section>
+<main>
+  <div id="stage"><svg id="svg" viewBox="0 0 1220 680" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="zoom"><button data-z="in">+</button><button data-z="out">−</button><button data-z="reset">⟲</button></div>
+    <div id="hint">Click a component to configure it and see its effective routes · scroll to zoom · drag to pan</div>
+  </div>
+  <aside id="insp"></aside>
+</main>
+<section id="trace"><div id="traceHead">Traffic trace <span class="muted" id="traceSum"></span><span class="sp"></span><button id="bTrace">▾</button></div><div id="traceBody"></div></section>
+<script src="engine.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
