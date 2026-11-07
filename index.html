@@ -328,8 +328,7 @@ function walk(start,dstIp,ctx){
       if(r.nh==='VirtualNetworkGateway'){H(cur,cur,r,'Gateway-learned BGP route '+r.prefix+' (longer than 0.0.0.0/0) wins — packet leaves via ExpressRoute, bypassing the firewall');nodes.push('ergw','msee');cur='msee';continue;}
       if(r.nh==='Internet'){
         if(dstIp!==EP.internet.ip){H(cur,cur,r,'System default route — private destination sent towards the Internet');return fin('dropped','Private destination sent to the Internet');}
-        if(cfg.privateSubnet){H(cur,cur,r,'System route 0.0.0.0/0 → Internet, but the subnet is PRIVATE (default outbound access disabled) and has no explicit outbound method (NAT Gateway, public IP, LB outbound rule) — packet is DROPPED');return fin('dropped','Private subnet without an explicit outbound method: no default outbound access to the Internet from '+NAME[cur]);}
-        H(cur,cur,r,'System route 0.0.0.0/0 → Internet: the VM uses Azure default outbound access (Microsoft-owned public IP that can change without notice) — not inspected');nodes.push('internet');bypass=true;return fin('delivered');}
+        H(cur,cur,r,'System route 0.0.0.0/0 → Internet, but default outbound access is retired and has no explicit outbound method (NAT Gateway, public IP, LB outbound rule) — packet is DROPPED');return fin('dropped','No explicit outbound method: default outbound access is retired, so there is no Internet access from '+NAME[cur]);}
       if(r.nh==='None'){H(cur,cur,r,'System route '+r.prefix+' with next hop None — packet is DROPPED');return fin('dropped','Next hop None for '+r.prefix+' in '+NAME[cur]+' (no gateway route is propagated)');}
     }
     if(cur==='fw'){
@@ -407,7 +406,7 @@ function analyze(src,dst){
     }
   }
   if(dst==='internet'&&f.status==='delivered'&&!f.nodes.includes('fw'))W.push({lvl:'warn',tag:'Bypass',title:'Internet egress bypasses Azure Firewall (default outbound access)',text:'There is no 0.0.0.0/0 UDR to the firewall and the spoke subnet is NOT private, so the VM uses Azure default outbound access: an implicit, Microsoft-owned public IP that can change without notice, with no inspection. New VNets are private by default and would drop this traffic; existing VNets keep default outbound access until the subnet is set to private.'});
-  if(dst==='internet'&&f.status==='dropped'&&f.hops.length&&f.hops[f.hops.length-1].route&&f.hops[f.hops.length-1].route.nh==='Internet')W.push({lvl:'err',tag:'NoEgress',title:'No Internet egress — private subnet without explicit outbound method',text:'The spoke has no 0.0.0.0/0 UDR to Azure Firewall, so the system route 0.0.0.0/0 → Internet applies. The subnet is private (default outbound access disabled — the default for VNets created with API versions after March 31, 2026), and it has no NAT Gateway, instance public IP or load balancer outbound rule, so the traffic is dropped. Fix: restore 0.0.0.0/0 → Azure Firewall (recommended, inspected and SNATed), or add an explicit outbound method to the subnet.'});
+  if(dst==='internet'&&f.status==='dropped'&&f.hops.length&&f.hops[f.hops.length-1].route&&f.hops[f.hops.length-1].route.nh==='Internet')W.push({lvl:'err',tag:'NoEgress',title:'No Internet egress — private subnet without explicit outbound method',text:'The spoke has no 0.0.0.0/0 UDR to Azure Firewall, so the system route 0.0.0.0/0 → Internet applies. The subnet has no NAT Gateway, instance public IP or load balancer outbound rule, and default outbound access is retired, so the traffic is dropped. Fix: restore 0.0.0.0/0 → Azure Firewall (recommended, inspected and SNATed), or add an explicit outbound method to the subnet.'});
   if(!W.length){
     let t='Symmetric path, no hairpin.';
     if(f.nodes.includes('fw'))t+=' Both directions are inspected by Azure Firewall'+(dst==='internet'?' (SNAT to the firewall public IP).':'.');
@@ -642,7 +641,7 @@ function refreshLabels(){
     const v=[];if(cfg.vnra&&on(i,'vnraSpoke'))v.push('172.16/16');if(cfg.vnra&&on(i,'vnraOnprem'))v.push('192.168/16');
     $('rtTxt'+i).textContent='rt-spoke-0'+i+' → Firewall: '+(u.length?u.join(', '):'none');
     $('rtTxtV'+i).textContent=v.length?'rt-spoke-0'+i+' → VNRA: '+v.join(', '):'';
-    $('rtTxtB'+i).textContent='Propagate gw routes: '+(cfg.propagate?'ON':'OFF')+' · peering routes ON · '+(cfg.privateSubnet?'Private subnet':'Default outbound ON');
+    $('rtTxtB'+i).textContent='Propagate gw routes: '+(cfg.propagate?'ON':'OFF')+' · peering routes ON · No default outbound access';
     $('pTxt'+i).textContent='Peering: Use remote GW '+(cfg.useRemoteGw?'✓':'✗')+' · Allow forwarded ✓';
     fitText($('sT'+i),180);
   });
@@ -710,7 +709,6 @@ function fillSelects(){
 }
 const TOG=[
  ['#','Spoke baseline'],
- ['privateSubnet','Spoke subnets are private (default outbound access disabled)','Baseline ON — default for new VNets (API versions after March 31, 2026 and the portal). Without the 0.0.0.0/0 → Firewall UDR, Internet traffic is then dropped. OFF = older VNet with implicit default outbound access (Microsoft-owned public IP).'],
  ['defaultToFw','Spoke UDR 0.0.0.0/0 → Azure Firewall','Baseline ON. Forces Internet egress through the firewall.'],
  ['propagate','Spoke route tables: Propagate gateway routes','Baseline ON. Spokes learn the RFC1918 routes from ExpressRoute. OFF: no ExpressRoute routes in the spokes, so ALL traffic (private and Internet) follows 0.0.0.0/0 → Azure Firewall.'],
  ['useRemoteGw','Spoke peering: Use remote gateways','Baseline ON. Spoke prefixes are advertised to on-prem and spokes learn ER routes.'],
