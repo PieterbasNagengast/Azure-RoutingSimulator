@@ -30,14 +30,14 @@
     'fw|vnra': [[635, 235], [635, 355]],
     'spoke1|fw': [[930, 245], [805, 245], [805, 205], [710, 205]],
     'spoke1|vnra': [[930, 245], [805, 245], [805, 365], [710, 365]],
-    'spoke1|gw': [[930, 245], [805, 245], [805, 545], [710, 545]],
+    'spoke1|gw': [[930, 245], [805, 245], [805, 535], [710, 535]],
     'spoke2|fw': [[930, 525], [785, 525], [785, 225], [710, 225]],
     'spoke2|vnra': [[930, 525], [785, 525], [785, 385], [710, 385]],
-    'spoke2|gw': [[930, 525], [785, 525], [785, 545], [710, 545]],
+    'spoke2|gw': [[930, 525], [825, 525], [825, 555], [710, 555]],
     'fw|internet': [[635, 195], [635, 72]],
     'vnra|internet': [[560, 355], [500, 355], [500, 40], [575, 40]],
-    'spoke1|internet': [[1055, 190], [1055, 40], [700, 40]],
-    'spoke2|internet': [[1180, 525], [1200, 525], [1200, 52], [700, 52]],
+    'spoke1|internet': [[1055, 190], [1055, 52], [675, 52]],
+    'spoke2|internet': [[1180, 525], [1200, 525], [1200, 40], [675, 40]],
     'onprem|internet': [[125, 500], [125, 52], [570, 52]]
   };
   function linkPts(a, b) {
@@ -46,18 +46,29 @@
     return null;
   }
   function pathFor(nodes) {
-    const seq = nodes.filter((n, i) => n !== 'hub' && n !== nodes[i - 1]), out = [];
-    for (let i = 1; i < seq.length; i++) { const p = linkPts(seq[i - 1], seq[i]); if (p) out.push(p); }
+    const seq = nodes.filter((n, i) => n !== 'hub' && n !== nodes[i - 1]), raw = [];
+    for (let i = 1; i < seq.length; i++) { const p = linkPts(seq[i - 1], seq[i]); if (p) p.forEach(pt => raw.push(pt)); }
+    const out = [];
+    raw.forEach(pt => {
+      const l = out[out.length - 1];
+      if (l && l[0] === pt[0] && l[1] === pt[1]) return;
+      if (l && l[0] !== pt[0] && l[1] !== pt[1]) out.push([pt[0], l[1]]);
+      out.push(pt);
+    });
     return out;
   }
   function offsetPts(pts, d) {
     const nrm = (a, b) => { const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l]; };
-    return pts.map((p, i) => {
+    const out = [];
+    pts.forEach((p, i) => {
       const n1 = i > 0 ? nrm(pts[i - 1], p) : null, n2 = i < pts.length - 1 ? nrm(p, pts[i + 1]) : null;
-      let n = n1 || n2;
-      if (n1 && n2 && (Math.abs(n1[0] - n2[0]) > 1e-6 || Math.abs(n1[1] - n2[1]) > 1e-6)) n = [n1[0] + n2[0], n1[1] + n2[1]];
-      return [p[0] + n[0] * d, p[1] + n[1] * d];
+      if (!n1 || !n2) { const n = n1 || n2; out.push([p[0] + n[0] * d, p[1] + n[1] * d]); return; }
+      const sx = n1[0] + n2[0], sy = n1[1] + n2[1];
+      if (Math.abs(sx) < 1e-6 && Math.abs(sy) < 1e-6) { out.push([p[0] + n1[0] * d, p[1] + n1[1] * d]); out.push([p[0] + n2[0] * d, p[1] + n2[1] * d]); }
+      else if (Math.abs(n1[0] - n2[0]) < 1e-6 && Math.abs(n1[1] - n2[1]) < 1e-6) out.push([p[0] + n1[0] * d, p[1] + n1[1] * d]);
+      else out.push([p[0] + sx * d, p[1] + sy * d]);
     });
+    return out;
   }
   function rounded(pts, r) {
     if (pts.length < 2) return '';
@@ -156,9 +167,9 @@
   function drawPaths(a) {
     const g = $('#world');
     const add = (res, cls) => {
-      const links = pathFor(res.nodes).map(l => offsetPts(l, 6)), pts = [].concat.apply([], links);
+      const pts = offsetPts(pathFor(res.nodes), 6);
       if (pts.length < 2) return;
-      const d = links.map((l, i) => (i ? 'L' + l[0][0] + ' ' + l[0][1] : '') + rounded(l, 12).replace(/^M[^L]*/, m => i ? '' : m)).join('');
+      const d = rounded(pts, 10);
       const pe = el('path', { class: 'path ' + cls + (res.status === 'dropped' ? ' dropped' : ''), d }); g.insertBefore(pe, g.querySelector('.nd'));
       const dot = el('circle', { class: 'dot', r: 5, fill: res.status === 'dropped' ? 'var(--err)' : cls === 'req' ? 'var(--acc)' : 'var(--ok)' }, null, g);
       const m = el('animateMotion', { dur: Math.max(3, pts.length * 0.8) + 's', repeatCount: 'indefinite', path: d }, null, dot);
