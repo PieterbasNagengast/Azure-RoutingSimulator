@@ -57,16 +57,16 @@ tr.used td{background:rgba(77,163,255,.18)}
 .sub{fill:var(--mut);font-size:10.5px;text-anchor:middle;pointer-events:none}
 .hubbox{fill:var(--hub);stroke:var(--line);stroke-width:1.5;stroke-dasharray:6 4}
 .link{fill:none;stroke:var(--line);stroke-width:2}
-.link.er{stroke:var(--er)}
+.link.er{stroke:var(--mut)}
 .link.peer{stroke:var(--mut);stroke-dasharray:2 4}
 .ltxt{fill:var(--mut);font-size:10.5px;text-anchor:middle}
-.ltxt.er{fill:var(--er)}
+.ltxt.er{fill:var(--mut)}
 .path{fill:none;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
 .path.req{stroke:var(--acc)}.path.ret{stroke:var(--ok);stroke-dasharray:7 6;animation:dash 1s linear infinite}
 .path.dropped{stroke:var(--err)}
 @keyframes dash{to{stroke-dashoffset:-26}}
 .dot{r:5}
 .x{fill:var(--err);font-size:22px;font-weight:700;text-anchor:middle}
-.tri{fill:var(--box);stroke:var(--er);stroke-width:2.5}
+.tri{fill:var(--box);stroke:var(--line);stroke-width:1.5}.nd:hover .tri,.nd.sel .tri{stroke:var(--acc)}
 .off{opacity:.35}
 .subbox{fill:transparent}
