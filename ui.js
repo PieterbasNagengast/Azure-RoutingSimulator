@@ -205,6 +205,17 @@
         dot.remove();
       }
     };
+    const seq = r => r.nodes.filter((n, i) => n !== 'hub' && n !== r.nodes[i - 1]).join('>');
+    const rv = a.ret && a.ret.status !== 'dropped' && a.fwd.status !== 'dropped' && seq(a.fwd) === a.ret.nodes.filter((n, i) => n !== 'hub' && n !== a.ret.nodes[i - 1]).reverse().join('>');
+    if (rv) {
+      const pts = offsetPts(pathFor(a.fwd.nodes), 0);
+      if (pts.length > 1) {
+        const d = rounded(pts, 10), dr = rounded(pts.slice().reverse(), 10), dur = Math.max(3, pts.length * 0.8) + 's';
+        g.appendChild(el('path', { class: 'path req', d }));
+        [[d, 'var(--acc)'], [dr, 'var(--ok)']].forEach(x => { const dot = el('circle', { class: 'dot', r: 5, fill: x[1] }, null, g); el('animateMotion', { dur, repeatCount: 'indefinite', path: x[0] }, null, dot); });
+      }
+      return;
+    }
     if (a.ret) add(a.ret, 'ret');
     add(a.fwd, 'req');
   }
