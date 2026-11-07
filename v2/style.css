@@ -69,3 +69,4 @@ tr.used td{background:rgba(77,163,255,.18)}
 .x{fill:var(--err);font-size:22px;font-weight:700;text-anchor:middle}
 .tri{fill:var(--box);stroke:var(--er);stroke-width:2.5}
 .off{opacity:.35}
+.subbox{fill:transparent}

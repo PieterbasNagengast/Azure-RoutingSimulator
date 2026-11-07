@@ -30,10 +30,10 @@
     'fw|vnra': [[635, 235], [635, 355]],
     'spoke1|fw': [[930, 245], [805, 245], [805, 205], [710, 205]],
     'spoke1|vnra': [[930, 245], [805, 245], [805, 365], [710, 365]],
-    'spoke1|gw': [[930, 245], [805, 245], [805, 535], [710, 535]],
+    'spoke1|gw': [[930, 245], [805, 245], [805, 545], [710, 545]],
     'spoke2|fw': [[930, 525], [785, 525], [785, 225], [710, 225]],
     'spoke2|vnra': [[930, 525], [785, 525], [785, 385], [710, 385]],
-    'spoke2|gw': [[930, 525], [785, 525], [785, 555], [710, 555]],
+    'spoke2|gw': [[930, 525], [785, 525], [785, 545], [710, 545]],
     'fw|internet': [[635, 195], [635, 72]],
     'vnra|internet': [[560, 355], [500, 355], [500, 40], [575, 40]],
     'spoke1|internet': [[1055, 190], [1055, 40], [700, 40]],
@@ -46,14 +46,9 @@
     return null;
   }
   function pathFor(nodes) {
-    const seq = nodes.filter((n, i) => n !== 'hub' && n !== nodes[i - 1]);
-    let pts = [];
-    for (let i = 1; i < seq.length; i++) {
-      const p = linkPts(seq[i - 1], seq[i]);
-      if (!p) continue;
-      p.forEach(pt => { const l = pts[pts.length - 1]; if (!l || l[0] !== pt[0] || l[1] !== pt[1]) pts.push(pt); });
-    }
-    return pts;
+    const seq = nodes.filter((n, i) => n !== 'hub' && n !== nodes[i - 1]), out = [];
+    for (let i = 1; i < seq.length; i++) { const p = linkPts(seq[i - 1], seq[i]); if (p) out.push(p); }
+    return out;
   }
   function offsetPts(pts, d) {
     const nrm = (a, b) => { const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l]; };
@@ -112,7 +107,7 @@
 
     const sub = (id, y, title, sublabel, glyph, on) => {
       const n = node(id, on ? '' : 'off');
-      el('rect', { class: 'shape', x: 500, y, width: 270, height: 130, rx: 10 }, null, n);
+      el('rect', { class: 'shape subbox', x: 500, y, width: 270, height: 130, rx: 10 }, null, n);
       el('text', { class: 'sub', x: 635, y: y + 22 }, title, n);
       el('rect', { class: 'shape', x: 560, y: y + 45, width: 150, height: 40, rx: 20 }, null, n);
       el('text', { class: 'lbl', x: 635, y: y + 70 }, glyph, n);
@@ -121,7 +116,7 @@
     sub('fw', 150, ap.fw.cidr, ap.fw.enabled ? ap.fw.ip + (ap.fw.snat ? ' · SNAT' : '') : 'not deployed', ap.fw.name, ap.fw.enabled);
     sub('vnra', 310, ap.vnra.cidr, ap.vnra.enabled ? ap.vnra.ip : 'not deployed — click to enable', 'VNRA', ap.vnra.enabled);
     const gwn = node('gw');
-    el('rect', { class: 'shape', x: 500, y: 480, width: 270, height: 130, rx: 10 }, null, gwn);
+    el('rect', { class: 'shape subbox', x: 500, y: 480, width: 270, height: 130, rx: 10 }, null, gwn);
     el('text', { class: 'sub', x: 635, y: 502 }, 'GatewaySubnet ' + hub.gw.cidr, gwn);
     el('rect', { class: 'shape', x: 560, y: 525, width: 150, height: 40, rx: 20 }, null, gwn);
     el('text', { class: 'lbl', x: 635, y: 550 }, hub.gw.name, gwn);
@@ -156,12 +151,12 @@
   function drawPaths(a) {
     const g = $('#world');
     const add = (res, cls) => {
-      const pts = cls === 'ret' ? offsetPts(pathFor(res.nodes), 9) : pathFor(res.nodes);
+      const links = pathFor(res.nodes).map(l => offsetPts(l, 6)), pts = [].concat.apply([], links);
       if (pts.length < 2) return;
-      const d = rounded(pts, 14);
-      el('path', { class: 'path ' + cls + (res.status === 'dropped' ? ' dropped' : ''), d }, null, g);
+      const d = links.map((l, i) => (i ? 'L' + l[0][0] + ' ' + l[0][1] : '') + rounded(l, 12).replace(/^M[^L]*/, m => i ? '' : m)).join('');
+      const pe = el('path', { class: 'path ' + cls + (res.status === 'dropped' ? ' dropped' : ''), d }); g.insertBefore(pe, g.querySelector('.nd'));
       const dot = el('circle', { class: 'dot', r: 5, fill: res.status === 'dropped' ? 'var(--err)' : cls === 'req' ? 'var(--acc)' : 'var(--ok)' }, null, g);
-      const m = el('animateMotion', { dur: Math.max(2, pts.length * 0.7) + 's', repeatCount: 'indefinite', path: d }, null, dot);
+      const m = el('animateMotion', { dur: Math.max(3, pts.length * 0.8) + 's', repeatCount: 'indefinite', path: d }, null, dot);
       if (res.status === 'dropped') {
         const e = pts[pts.length - 1];
         el('text', { class: 'x', x: e[0], y: e[1] + 7 }, '✖', g);
