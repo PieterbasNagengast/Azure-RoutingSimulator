@@ -21,10 +21,10 @@
   function setp(p, v) { const k = p.split('.'), last = k.pop(); k.reduce((o, x) => o[x], scn)[last] = v; }
 
   /* ---------- topology geometry ---------- */
-  const C = { internet: [635, 52], onprem: [125, 545], msee: [370, 545], gw: [635, 545], fw: [635, 215], vnra: [635, 375], spoke1: [1055, 245], spoke2: [1055, 525] };
+  const C = { internet: [635, 52], onprem: [125, 559], msee: [370, 559], gw: [635, 545], fw: [635, 215], vnra: [635, 375], spoke1: [1055, 245], spoke2: [1055, 525] };
   const LINKS = {
-    'onprem|msee': [[220, 545], [345, 545]],
-    'msee|gw': [[395, 545], [440, 545], [440, 559], [560, 559]],
+    'onprem|msee': [[220, 559], [345, 559]],
+    'msee|gw': [[395, 559], [560, 559]],
     'gw|fw': [[560, 559], [475, 559], [475, 215], [560, 215]],
     'gw|vnra': [[560, 545], [485, 545], [485, 375], [560, 375]],
     'fw|vnra': [[635, 251], [635, 339]],
@@ -38,7 +38,7 @@
     'vnra|internet': [[560, 403], [500, 403], [500, 40], [575, 40]],
     'spoke1|internet': [[1055, 190], [1055, 52], [675, 52]],
     'spoke2|internet': [[1180, 525], [1200, 525], [1200, 40], [675, 40]],
-    'onprem|internet': [[125, 500], [125, 52], [570, 52]]
+    'onprem|internet': [[125, 514], [125, 52], [570, 52]]
   };
   function linkPts(a, b) {
     if (LINKS[a + '|' + b]) return LINKS[a + '|' + b];
@@ -136,7 +136,7 @@
     });
     el('path', { class: 'link er', d: rounded(LINKS['onprem|msee'], 0) }, null, g);
     el('path', { class: 'link er', d: rounded(LINKS['msee|gw'], 0) }, null, g);
-    el('text', { class: 'ltxt er', x: 282, y: 565 }, 'ER connection', g);
+    el('text', { class: 'ltxt er', x: 282, y: 590 }, 'ER connection', g);
     el('path', { class: 'link', d: 'M635 150L635 72' }, null, g);
     el('text', { class: 'ltxt', x: 660, y: 100 }, 'Internet egress', g);
 
@@ -174,14 +174,14 @@
     });
 
     const op = node('onprem');
-    el('rect', { class: 'shape', x: 30, y: 500, width: 190, height: 90, rx: 10 }, null, op);
-    el('text', { class: 'lbl', x: 125, y: 535 }, scn.onprem.name, op);
-    el('text', { class: 'sub', x: 125, y: 553 }, scn.onprem.networks, op);
-    el('text', { class: 'sub', x: 125, y: 570 }, 'host ' + scn.onprem.host, op);
+    el('rect', { class: 'shape', x: 30, y: 514, width: 190, height: 90, rx: 10 }, null, op);
+    el('text', { class: 'lbl', x: 125, y: 549 }, scn.onprem.name, op);
+    el('text', { class: 'sub', x: 125, y: 567 }, scn.onprem.networks, op);
+    el('text', { class: 'sub', x: 125, y: 584 }, 'host ' + scn.onprem.host, op);
 
     const ms = node('msee');
-    el('polygon', { class: 'tri', points: '370,505 420,585 320,585' }, null, ms);
-    el('text', { class: 'ltxt er', x: 370, y: 605, style: 'font-weight:600' }, 'ExpressRoute circuit', ms);
+    el('polygon', { class: 'tri', points: '370,519 420,599 320,599' }, null, ms);
+    el('text', { class: 'ltxt er', x: 370, y: 619, style: 'font-weight:600' }, 'ExpressRoute circuit', ms);
 
     const inet = node('internet');
     el('path', { class: 'shape', d: 'M590 62a22 22 0 0 1 8-30a28 28 0 0 1 50-6a24 24 0 0 1 32 14a20 20 0 0 1-4 22z' }, null, inet);
