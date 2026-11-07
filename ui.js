@@ -248,7 +248,8 @@
       '<div class="btnrow"><button data-add="' + p + '">+ Add route</button></div>';
   }
   function rtSection(p, opts) {
-    return '<h3>Route table (UDRs)</h3>' + sw('Propagate gateway routes', p + '.propagate', 'BGP routes learned by the ER gateway appear in this route table.') +
+    const lock = opts.lock || '';
+    return '<h3>Route table (UDRs)</h3>' + (lock === 'gw' ? '<div class="note">Propagate gateway routes is always on for the GatewaySubnet and cannot be disabled.</div>' : sw('Propagate gateway routes', p + '.propagate', 'BGP routes learned by the ER gateway appear in this route table.')) + (lock === 'fw' ? '<div class="rt"><input value="0.0.0.0/0" disabled><select disabled><option>Internet</option></select><button disabled title="Required by Azure Firewall">🔒</button></div><div class="note">Azure Firewall requires this default route to the Internet; it cannot be changed or removed.</div>' : '') +
       (opts.dpr ? sw('Disable peering route propagation', p + '.disablePeering', 'Removes the automatic peering (VNet) routes so a UDR can take over for the peered ranges.', true) : '') + routesEd(p + '.routes');
   }
   function routeTable(id, a) {
@@ -270,11 +271,11 @@
     } else if (id === 'hub') {
       h = title(scn.hub.name, 'Hub virtual network.') + rowI('Name', 'hub.name') + rowI('Address space', 'hub.cidr', 'cidr');
     } else if (id === 'gw') {
-      h = title(scn.hub.gw.name, 'ExpressRoute gateway in the GatewaySubnet.') + rowI('Subnet CIDR', 'hub.gw.cidr', 'cidr') + rtSection('hub.gw.rt', { dpr: true });
+      h = title(scn.hub.gw.name, 'ExpressRoute gateway in the GatewaySubnet.') + rowI('Subnet CIDR', 'hub.gw.cidr', 'cidr') + rtSection('hub.gw.rt', { dpr: true, lock: 'gw' });
     } else if (id === 'fw' || id === 'vnra') {
       const p = 'hub.appliances.' + id;
       h = title(ap[id].name, id === 'fw' ? 'Stateful Azure Firewall. Drops asymmetric flows.' : 'Virtual Network Routing Appliance (preview) — a forwarder that does not SNAT or track sessions.') + sw('Deployed', p + '.enabled') +
-        (ap[id].enabled ? rowI('Subnet CIDR', p + '.cidr', 'cidr') + rowI('Private IP', p + '.ip', 'ip') + sw('SNAT to the Internet', p + '.snat', 'Used when this appliance sends traffic to the Internet.') + sw('Policy allows the flow', p + '.allow', 'Turn off to see a policy deny.') + rtSection(p + '.rt', { dpr: true }) : '');
+        (ap[id].enabled ? rowI('Subnet CIDR', p + '.cidr', 'cidr') + rowI('Private IP', p + '.ip', 'ip') + sw('SNAT to the Internet', p + '.snat', 'Used when this appliance sends traffic to the Internet.') + sw('Policy allows the flow', p + '.allow', 'Turn off to see a policy deny.') + rtSection(p + '.rt', { dpr: true, lock: id === 'fw' ? 'fw' : '' }) : '');
     } else if (scn.spokes[id]) {
       const p = 'spokes.' + id;
       h = title(scn.spokes[id].name, 'Spoke virtual network, peered to the hub.') + rowI('Name', p + '.name') + rowI('Address space', p + '.cidr', 'cidr') + rowI('VM IP', p + '.vm', 'ip') +
