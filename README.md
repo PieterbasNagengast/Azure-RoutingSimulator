@@ -5,7 +5,7 @@ Interactive Azure hub & spoke routing simulator: ExpressRoute, VNet peering, Azu
 Live site: https://azureroutingsimulator.com
 
 ## Run locally
-Static site, no build step. Open `v2/index.html` in a browser. Tests: `node tests/engine.test.js`.
+Static site, no build step. Open `index.html` in a browser. Tests: `node tests/engine.test.js`. The previous single-file version is kept in `legacy/` (tests: `node tests/legacy.validate.js`).
 
 ## Hosting on GitHub Pages (custom domain)
 1. Repo **Settings → Pages**: deploy from branch `main`, folder `/ (root)`. The `CNAME` file sets the domain.

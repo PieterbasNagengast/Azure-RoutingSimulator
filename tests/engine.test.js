@@ -1,4 +1,4 @@
-const RS = require('../v2/engine.js');
+const RS = require('../engine.js');
 let fail = 0;
 const ok = (c, m) => { if (!c) { fail++; console.log('FAIL', m); } else console.log('ok  ', m); };
 const run = (s, f) => { const T = RS.buildTables(s); return RS.analyze(s, T, Object.assign({}, s.flow, f)); };
