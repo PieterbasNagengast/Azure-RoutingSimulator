@@ -128,6 +128,11 @@
       el('text', { class: 'lbl', x: 1055, y: y + 30 }, s.name, n);
       el('text', { class: 'sub', x: 1055, y: y + 48 }, s.cidr, n);
       el('text', { class: 'sub', x: 1055, y: y + 68 }, 'VM ' + s.vm + (s.outbound ? ' · NAT/PIP' : ''), n);
+      if (s.outbound) {
+        const nx = id === 'spoke1' ? 1055 : 1180, ny = id === 'spoke1' ? y : y + 55;
+        el('rect', { class: 'shape', x: nx - 28, y: ny - 10, width: 56, height: 20, rx: 5, style: 'stroke:var(--acc)' }, null, n);
+        el('text', { class: 'sub', x: nx, y: ny + 4, style: 'fill:var(--fg);font-weight:600' }, 'NAT GW', n);
+      }
       el('text', { class: 'sub', x: 1055, y: y + 88 }, s.rt.routes.length + ' UDR' + (s.rt.routes.length === 1 ? '' : 's'), n);
     });
 
