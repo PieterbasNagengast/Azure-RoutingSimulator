@@ -565,10 +565,7 @@ function drawTopo(){
   el('text',{class:'xs dtl'},gv,'Routing Appliance');
   el('text',{class:'xs dtl'},gv,'.128/26 · 172.16.0.132');
   // links
-  SPOKES.forEach(i=>{el('path',{d:`M850,${SPY[i]} L930,${SPY[i]}`,class:'link peer'},L);});
-  el('path',{d:'M850,222 L850,488',class:'link peer'},L);
-  [222,353,488].forEach(y=>el('path',{d:`M800,${y} L850,${y}`,class:'link peer'},L));
-  el('text',{x:818,y:SPY[1]-6,class:'xs'},L,'peering');
+  SPOKES.forEach(i=>{el('path',{d:`M800,${SPY[i]} L930,${SPY[i]}`,class:'link peer'},L);el('text',{x:865,y:SPY[i]-6,'text-anchor':'middle',class:'xs'},L,'peering');});
   el('path',{d:'M579,488 L420,488',class:'link erlink',id:'lnkC'},L);
   el('path',{d:'M300,480 L205,480',class:'link erlink',id:'lnkP','stroke-width':2},L);
   el('path',{d:'M300,498 L205,498',class:'link erlink',id:'lnkS','stroke-width':2},L);
@@ -659,7 +656,7 @@ function refreshLabels(){
 }
 // Lanes: private traffic between the ER Gateway and a spoke uses the lower-right lane (never near the firewall);
 // firewall traffic uses the peering junction next to the firewall subnet.
-const LANE={fw:850,vnra:850,ergw:850},LW=520;
+const HX={1:770,2:740},LW=520; // the flow follows the peering into the hub, then turns at x=HX inside the hub
 function pts(nodes,off){
   const isS=n=>/^spoke/.test(n),isD=n=>n==='fw'||n==='vnra'||n==='ergw';
   const side=(n,m)=>{
@@ -683,8 +680,8 @@ function pts(nodes,off){
   nodes.forEach((n,k)=>{
     const ai=anc(k,0),ao=anc(k,1);
     if(k>0){const p=nodes[k-1];
-      if(isS(p)&&isD(n)){const l=LANE[n];P.push([l,prev[1]],[l,ai[1]]);}
-      else if(isD(p)&&isS(n)){const l=LANE[p]+((sIn[k-1]||sOut[k-1])?14:0);P.push([l,prev[1]],[l,ai[1]]);}
+      if(isS(p)&&isD(n)){const l=HX[+p.slice(5)];P.push([l,prev[1]],[l,ai[1]]);}
+      else if(isD(p)&&isS(n)){const l=HX[+n.slice(5)];P.push([l,prev[1]],[l,ai[1]]);}
       else if(needVia(p,n))P.push([LW,prev[1]],[LW,ai[1]]);}
     P.push(ai);if(ao[0]!==ai[0]||ao[1]!==ai[1])P.push(ao);
     prev=ao;});
