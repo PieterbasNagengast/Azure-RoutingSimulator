@@ -70,3 +70,12 @@ tr.used td{background:rgba(77,163,255,.18)}
 .tri{fill:var(--box);stroke:var(--line);stroke-width:1.5}.nd:hover .tri,.nd.sel .tri{stroke:var(--acc)}
 .off{opacity:.35}
 .subbox{fill:transparent}
+
+.path.ghost{opacity:.2}
+.hopn{fill:var(--acc);stroke:var(--bg,#0f1420);stroke-width:2}
+.hopn.cur{fill:var(--ok)}
+.hopt{fill:#fff;font:700 10px system-ui;text-anchor:middle;pointer-events:none}
+#stepCtl{display:inline-flex;gap:6px;align-items:center;margin-right:10px;font-size:12px}
+#stepCtl button:disabled{opacity:.35}
+.hop.dim{opacity:.4}
+.hop.act{outline:2px solid var(--acc);border-radius:6px}

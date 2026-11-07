@@ -175,25 +175,59 @@
   }
 
   /* ---------- trace overlay ---------- */
+  let step = /[#&]step=(\d+)/.test(location.hash) ? +/[#&]step=(\d+)/.exec(location.hash)[1] : -1;
+  const BADGE = { fw: [563, 183], vnra: [563, 343], gw: [563, 513], onprem: [40, 515], msee: [330, 525], internet: [590, 25], spoke1: [938, 198], spoke2: [938, 478] };
+  function totalSteps(a) { return a.fwd.hops.length + (a.ret ? a.ret.hops.length : 0); }
   function drawPaths(a) {
     const g = $('#world');
-    const add = (res, cls) => {
-      const pts = offsetPts(pathFor(res.nodes), 5);
+    const add = (nodes, res, cls, opt) => {
+      const pts = offsetPts(pathFor(nodes), 5);
       if (pts.length < 2) return;
-      const d = rounded(pts, 10);
-      const pe = el('path', { class: 'path ' + cls + (res.status === 'dropped' ? ' dropped' : ''), d }); g.appendChild(pe);
-      const dot = el('circle', { class: 'dot', r: 5, fill: res.status === 'dropped' ? 'var(--err)' : cls === 'req' ? 'var(--acc)' : 'var(--ok)' }, null, g);
-      const m = el('animateMotion', { dur: Math.max(3, pts.length * 0.8) + 's', repeatCount: 'indefinite', path: d }, null, dot);
-      if (res.status === 'dropped') {
-        const e = pts[pts.length - 1];
-        el('text', { class: 'x', x: e[0], y: e[1] + 7 }, '✖', g);
-        dot.remove();
-      }
+      const d = rounded(pts, 10), drop = res.status === 'dropped' && opt.end;
+      g.appendChild(el('path', { class: 'path ' + cls + (drop ? ' dropped' : '') + (opt.ghost ? ' ghost' : ''), d }));
+      if (opt.ghost) return;
+      const e = pts[pts.length - 1];
+      if (drop) { el('text', { class: 'x', x: e[0], y: e[1] + 7 }, '✖', g); return; }
+      const col = cls === 'req' ? 'var(--acc)' : 'var(--ok)';
+      const dot = el('circle', { class: 'dot', r: 5, fill: col }, null, g);
+      if (step >= 0) { dot.setAttribute('cx', e[0]); dot.setAttribute('cy', e[1]); }
+      else el('animateMotion', { dur: Math.max(3, pts.length * 0.8) + 's', repeatCount: 'indefinite', path: d }, null, dot);
     };
-    if (a.ret) add(a.ret, 'ret');
-    add(a.fwd, 'req');
+    const fn = a.fwd.hops.map(h => h.node);
+    if (step < 0) {
+      if (a.ret) add(a.ret.hops.map(h => h.node), a.ret, 'ret', { end: true });
+      add(fn, a.fwd, 'req', { end: true });
+      return;
+    }
+    const nf = fn.length;
+    if (step < nf) {
+      add(fn, a.fwd, 'req', { ghost: true });
+      add(fn.slice(0, step + 1), a.fwd, 'req', { end: step === nf - 1 });
+    } else {
+      const rn = a.ret.hops.map(h => h.node), k = step - nf;
+      add(fn, a.fwd, 'req', { ghost: true });
+      add(rn, a.ret, 'ret', { ghost: true });
+      add(rn.slice(0, k + 1), a.ret, 'ret', { end: k === rn.length - 1 });
+    }
+    const all = a.fwd.hops.concat(a.ret ? a.ret.hops : []);
+    all.slice(0, step + 1).forEach((h, i) => {
+      const b = BADGE[h.node]; if (!b) return;
+      const off = all.slice(0, i).filter(x => x.node === h.node).length * 18;
+      const cur = i === step;
+      el('circle', { class: 'hopn' + (cur ? ' cur' : ''), cx: b[0] + off, cy: b[1], r: 9 }, null, g);
+      el('text', { class: 'hopt', x: b[0] + off, y: b[1] + 4 }, String(i + 1), g);
+    });
   }
-
+  function stepUi(a) {
+    const n = totalSteps(a);
+    if (step >= n) step = n - 1;
+    $('#sLbl').textContent = step < 0 ? 'All hops' : 'Hop ' + (step + 1) + ' / ' + n;
+    $('#sPrev').disabled = step < 0; $('#sNext').disabled = step >= n - 1;
+    document.querySelectorAll('#traceBody .hop').forEach((h, i) => {
+      h.classList.toggle('act', i === step); h.classList.toggle('dim', step >= 0 && i !== step);
+      if (i === step) h.scrollIntoView({ block: 'nearest' });
+    });
+  }
   /* ---------- trace panel ---------- */
   function hopHtml(h, cls) {
     const r = h.route;
@@ -278,7 +312,7 @@
     scn = RS.normalize(scn);
     T = RS.buildTables(scn);
     A = RS.analyze(scn, T, scn.flow);
-    drawTopology(); drawPaths(A); renderFlow(); renderTrace(A); renderInspector(); renderChip(); renderPresets();
+    drawTopology(); drawPaths(A); renderFlow(); renderTrace(A); stepUi(A); renderInspector(); renderChip(); renderPresets();
     applyView();
   }
   function renderChip() {
@@ -337,6 +371,10 @@
   $('#preset').onchange = e => { if (e.target.value !== 'custom') loadPreset(e.target.value); };
   $('#bReset').onclick = () => loadPreset('baseline');
   $('#bTheme').onclick = () => { document.body.classList.toggle('light'); localStorage.setItem('rs2.theme', document.body.classList.contains('light') ? 'light' : 'dark'); };
+  const stepTo = v => { step = v; render(); };
+  $('#sPrev').onclick = () => stepTo(step < 0 ? -1 : step - 1);
+  $('#sNext').onclick = () => stepTo(step + 1);
+  $('#sAll').onclick = () => stepTo(-1);
   $('#bTrace').onclick = () => { $('#trace').classList.toggle('col'); $('#bTrace').textContent = $('#trace').classList.contains('col') ? '▴' : '▾'; };
   $('#bShare').onclick = () => {
     const u = location.href.split('#')[0] + '#s=' + btoa(unescape(encodeURIComponent(JSON.stringify(scn))));
