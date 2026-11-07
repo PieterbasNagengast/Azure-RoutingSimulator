@@ -172,6 +172,13 @@ tr.used td{background:var(--warnbg);font-weight:600}
     <div class="bar">
       <h2>Topology &amp; live traffic flow <span><span class="base" id="baseBadge">Baseline configuration</span></span></h2>
     </div>
+    <div class="tabs" id="tabs" role="tablist">
+      <button class="sel" data-pane="pTopo">Topology</button>
+      <button data-pane="pFlow">Flow analysis</button>
+      <button data-pane="pRoutes">Effective routes</button>
+      <button data-pane="pDesign">Baseline design &amp; IP plan</button>
+    </div>
+    <div class="pane sel" id="pTopo" style="padding:8px 0 0">
     <div class="topowrap">
     <div class="mxwin pulse" id="mxwin">
       <div class="bar"><h3>👆 Flow matrix</h3><div class="controls"><button class="primary" id="btnPlay" title="Replay the selected flow">▶</button><button id="btnOverview" title="Overview: private vs Internet">Overview</button></div></div>
@@ -197,14 +204,8 @@ tr.used td{background:var(--warnbg);font-weight:600}
     </div>
     </div>
     <div id="flowCls"></div>
-  </div>
-  <div class="card">
-    <div class="tabs" id="tabs" role="tablist">
-      <button class="sel" data-pane="pFlow">Flow analysis</button>
-      <button data-pane="pRoutes">Effective routes</button>
-      <button data-pane="pDesign">Baseline design &amp; IP plan</button>
     </div>
-    <div class="pane sel" id="pFlow">
+    <div class="pane" id="pFlow">
       <h2>Flow analysis <span id="flowTitle" style="font-weight:400;color:var(--muted)"></span></h2>
       <div class="cols2">
         <div class="warns" id="warns"></div>
@@ -564,8 +565,10 @@ function drawTopo(){
   el('text',{class:'xs dtl'},gv,'Routing Appliance');
   el('text',{class:'xs dtl'},gv,'.128/26 · 172.16.0.132');
   // links
-  SPOKES.forEach(i=>{const j=J(i);el('path',{d:`M${j[0]},${j[1]} L930,${SPY[i]}`,class:'link peer'},L);
-    el('text',{x:830,y:(j[1]+SPY[i])/2-6,class:'xs'},L,'peering');});
+  SPOKES.forEach(i=>{el('path',{d:`M850,${SPY[i]} L930,${SPY[i]}`,class:'link peer'},L);});
+  el('path',{d:'M850,222 L850,488',class:'link peer'},L);
+  [222,353,488].forEach(y=>el('path',{d:`M800,${y} L850,${y}`,class:'link peer'},L));
+  el('text',{x:818,y:SPY[1]-6,class:'xs'},L,'peering');
   el('path',{d:'M579,488 L420,488',class:'link erlink',id:'lnkC'},L);
   el('path',{d:'M300,480 L205,480',class:'link erlink',id:'lnkP','stroke-width':2},L);
   el('path',{d:'M300,498 L205,498',class:'link erlink',id:'lnkS','stroke-width':2},L);
@@ -656,7 +659,7 @@ function refreshLabels(){
 }
 // Lanes: private traffic between the ER Gateway and a spoke uses the lower-right lane (never near the firewall);
 // firewall traffic uses the peering junction next to the firewall subnet.
-const LANE={fw:850,vnra:830,ergw:870},LW=520;
+const LANE={fw:850,vnra:850,ergw:850},LW=520;
 function pts(nodes,off){
   const isS=n=>/^spoke/.test(n),isD=n=>n==='fw'||n==='vnra'||n==='ergw';
   const side=(n,m)=>{
@@ -928,7 +931,7 @@ function init(){
   paintTheme();
   ['tabs'].forEach(id=>$(id).addEventListener('click',e=>{const b=e.target.closest('button[data-pane]');if(!b)return;
     [...$(id).children].forEach(x=>x.classList.toggle('sel',x===b));
-    ['pFlow','pRoutes','pDesign'].forEach(p=>$(p).classList.toggle('sel',p===b.dataset.pane));}));
+    ['pTopo','pFlow','pRoutes','pDesign'].forEach(p=>$(p).classList.toggle('sel',p===b.dataset.pane));}));
     recompute(true);
 }
 init();
