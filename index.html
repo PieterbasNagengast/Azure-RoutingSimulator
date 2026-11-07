@@ -118,7 +118,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
 .mx td.na{color:var(--muted)}
 .mx td.c:hover{outline:2px solid var(--fwd)}
 .mx td.selc{outline:2px solid var(--ink)}
-.topowrap{position:relative;flex:1;min-height:0}.zc{position:absolute;inset-block-end:10px;inset-inline-end:10px;display:flex;flex-direction:column;gap:4px;z-index:5}.zc button{inline-size:30px;block-size:30px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);cursor:pointer;font-size:16px;line-height:1}.zc button:hover{border-color:var(--fwd)}#topo{cursor:grab;touch-action:none}#topo.pan{cursor:grabbing}#topo{max-width:none;width:100%;height:100%;max-height:none;margin:0;display:block}html,body{height:100%}body{display:flex;flex-direction:column;overflow:hidden}main{flex:1;min-height:0;display:flex;flex-direction:column}.stage{flex:1;min-height:0;display:flex;flex-direction:column;margin-block-end:0}.stage>.pane{overflow:auto;min-height:0}.stage>.pane.sel{flex:1}.stage>#pTopo.sel{display:flex;flex-direction:column}.dtl{display:none}#tip{position:fixed;z-index:50;pointer-events:none;max-width:300px;padding:8px 10px;border-radius:8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.35);font-size:12px;line-height:1.5}#tip b{display:block;margin-bottom:2px}#tip[hidden]{display:none}.rtback{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px}.rtback[hidden]{display:none}.rtmodal{position:relative;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);padding:16px 20px;max-width:820px;width:100%;max-height:85vh;overflow:auto}.rtx{position:absolute;top:10px;right:10px;cursor:pointer}.node{cursor:pointer}
+.topowrap{position:relative;flex:1;min-height:0}.zc{position:absolute;inset-block-end:10px;inset-inline-end:10px;display:flex;flex-direction:column;gap:4px;z-index:5}.zc button{inline-size:30px;block-size:30px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);cursor:pointer;font-size:16px;line-height:1}.zc button:hover{border-color:var(--fwd)}#topo{cursor:grab;touch-action:none}#topo.pan{cursor:grabbing}#topo{max-width:none;width:100%;height:100%;max-height:none;margin:0;display:block}html,body{height:100%}body{display:flex;flex-direction:column;overflow:hidden}main{flex:1;min-height:0;display:flex;flex-direction:column}.stage{flex:1;min-height:0;display:flex;flex-direction:column;margin-block-end:0}.stage>.pane{overflow:auto;min-height:0}.stage>.pane.sel{flex:1}.stage>#pTopo.sel{display:flex;flex-direction:column}.dtl{display:none}#tip{position:fixed;z-index:50;pointer-events:none;max-width:300px;padding:8px 10px;border-radius:8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.35);font-size:12px;line-height:1.5}#tip b{display:block;margin-bottom:2px}#tip[hidden]{display:none}.rtback{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px}.rtback[hidden]{display:none}.rtmodal{position:relative;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);padding:16px 20px;max-width:820px;width:100%;max-height:85vh;overflow:auto}.rtx{position:absolute;top:10px;right:10px;cursor:pointer}.node{cursor:pointer}.ctx{position:fixed;z-index:70;min-inline-size:190px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.45);padding:4px}.ctx[hidden]{display:none}.ctx button{display:block;inline-size:100%;text-align:start;background:none;border:0;color:inherit;padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit}.ctx button:hover,.ctx button:focus-visible{background:var(--chip)}.tophint{position:absolute;inset-block-end:12px;inset-inline-start:50%;transform:translateX(-50%);font-size:11.5px;color:var(--muted);pointer-events:none}
 .mxwin{position:absolute;inset-block-start:6px;inset-inline-start:6px;z-index:5;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel);opacity:.96;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .mxwin h3{margin:0;font-size:12px}
 .mxwin .bar{margin-block-end:4px;display:flex;gap:8px;align-items:center;justify-content:space-between}
@@ -202,6 +202,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
     </div>
     <div class="pane sel" id="pTopo" style="padding:8px 0 0">
     <div class="topowrap">
+      <div class="tophint">Right-click a component to configure it or see its effective routes · scroll to zoom · drag to pan</div>
       <div class="zc" role="group" aria-label="Zoom"><button id="zIn" title="Zoom in" aria-label="Zoom in">+</button><button id="zOut" title="Zoom out" aria-label="Zoom out">−</button><button id="zRst" title="Reset view" aria-label="Reset view">⤢</button></div>
     <div class="mxwin pulse" id="mxwin">
       <div class="bar"><h3>👆 Flow matrix</h3><div class="controls"><button class="primary" id="btnPlay" title="Replay the selected flow">▶</button><button id="btnOverview" title="Overview: private vs Internet">Overview</button></div></div>
@@ -238,6 +239,8 @@ tr.used td{background:var(--warnbg);font-weight:600}
         </div>
       </div>
     </div>
+    <div class="rtback" id="pCfg" hidden><div class="rtmodal" role="dialog" aria-label="Configure component" style="max-width:560px"><button class="rtx" id="cfgClose" title="Close" aria-label="Close">✕</button><h2 id="cfgTitle">Configure</h2><div id="cfgBody"></div><p class="note">Changes apply immediately to the topology and flows.</p></div></div>
+    <div class="ctx" id="ctx" role="menu" hidden><button id="ctxCfg" role="menuitem">⚙ Configure…</button><button id="ctxRt" role="menuitem">☰ Effective routes</button></div>
     <div class="rtback" id="pRoutes" hidden><div class="rtmodal" role="dialog" aria-label="Effective routes">
       <button class="rtx" id="rtClose" title="Close" aria-label="Close">✕</button>
       <h2>Effective routes <select id="selTable"></select></h2>
@@ -255,7 +258,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
       <tr><td>Spoke route tables</td><td><code>0.0.0.0/0 → VirtualAppliance 172.16.0.68</code> · Propagate gateway routes <span class="yes">✓</span></td></tr>
       <tr><td>Hub route tables</td><td>None on GatewaySubnet or AzureFirewallSubnet</td></tr>
       <tr><td>Optional VNRA</td><td>Not deployed in the baseline. Enable it under What-if to route private traffic (spoke↔spoke, spoke↔on-prem) through the routing appliance while Internet stays on Azure Firewall.</td></tr>
-      <tr><td>ExpressRoute</td><td>On-prem advertises 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16. Azure advertises hub + spoke /24s (gateway transit).</td></tr>
+      <tr><td>ExpressRoute</td><td>On-prem advertises RFC1918 by default (configurable via right-click → Configure on On-prem). Azure advertises hub + spoke /24s (gateway transit).</td></tr>
       <tr><td>Peering routes</td><td>Enabled everywhere in the baseline. "Disable peering route propagation" (public preview) is a route-table setting that suppresses the system peering routes so a summarized UDR can win.</td></tr>
     </table>
     </div><div>
@@ -299,6 +302,7 @@ function parseCidrs(s){const ok=[],bad=[];String(s||'').split(/[\s,;]+/).filter(
   const p=[24,16,8,0].map(sh=>Math.floor(net/Math.pow(2,sh))%256).join('.')+'/'+len;if(!ok.includes(p))ok.push(p);});return {ok,bad};}
 const erList=()=>parseCidrs(cfg.erPfx).ok;
 const peerOk=()=>cfg.spokeAccess&&cfg.hubAccess;
+const erCover=()=>erList().filter(p=>maskOf(p)>0&&inPfx('172.16.1.10',p)).sort((a,b)=>maskOf(b)-maskOf(a))[0]||'172.16.0.0/12';
 const effRG=()=>cfg.useRemoteGw&&cfg.hubGwTransit&&peerOk();
 const EP={spoke1:{ip:'172.16.1.4',label:'Spoke 1 VM'},spoke2:{ip:'172.16.2.4',label:'Spoke 2 VM'},onprem:{ip:'192.168.10.10',label:'On-prem server'},internet:{ip:'203.0.113.10',label:'Internet host'}};
 const NAME={spoke1:'Spoke 1',spoke2:'Spoke 2',fw:'Azure Firewall',vnra:'Routing Appliance (VNRA)',ergw:'ExpressRoute Gateway',msee:'ER circuit (MSEE edge)',onprem:'On-prem DC',internet:'Internet',hub:'Hub VNet'};
@@ -425,7 +429,7 @@ function analyze(src,dst){
   if(!ends.includes('onprem')&&(viaER(f)||viaER(r))){
     const sr=TABLES[src]?lpm(TABLES[src].routes,EP[dst].ip):null;const s0=TABLES[src]?lpm(TABLES[src].routes,'8.8.8.8'):null;
     const insp=f.nodes.includes('fw')||(r&&r.nodes.includes('fw'));
-    W.push({lvl:'warn',tag:'Hairpin',title:'ExpressRoute hairpin detected',text:'Traffic between '+NAME[src]+' and '+NAME[dst]+' leaves Azure, turns around on the MSEE edge routers at the ExpressRoute peering location and comes back in through the ER Gateway. Because the spoke learns 172.16.0.0/12 from on-prem and there is no spoke-to-spoke peering, the /12 BGP route beats the '+(s0?s0.prefix+' '+(s0.src==='User'?'UDR to '+nhName(s0):'system route to the Internet'):'default route')+'. This adds latency, consumes circuit bandwidth twice, depends on ER Gateway throughput'+(insp?' and the firewall only sees the traffic after it has already hairpinned over ExpressRoute.':' and is not inspected by Azure Firewall.')+' Fix: add a UDR 172.16.0.0/16 on every spoke route table pointing to Azure Firewall (with inspection) or to a Virtual Network Routing Appliance (high-throughput forwarding, no inspection) — try the what-if switches.'});
+    W.push({lvl:'warn',tag:'Hairpin',title:'ExpressRoute hairpin detected',text:'Traffic between '+NAME[src]+' and '+NAME[dst]+' leaves Azure, turns around on the MSEE edge routers at the ExpressRoute peering location and comes back in through the ER Gateway. Because the spoke learns '+erCover()+' from on-prem and there is no spoke-to-spoke peering, the /12 BGP route beats the '+(s0?s0.prefix+' '+(s0.src==='User'?'UDR to '+nhName(s0):'system route to the Internet'):'default route')+'. This adds latency, consumes circuit bandwidth twice, depends on ER Gateway throughput'+(insp?' and the firewall only sees the traffic after it has already hairpinned over ExpressRoute.':' and is not inspected by Azure Firewall.')+' Fix: add a UDR 172.16.0.0/16 on every spoke route table pointing to Azure Firewall (with inspection) or to a Virtual Network Routing Appliance (high-throughput forwarding, no inspection) — try the what-if switches.'});
 
   }
   if(r&&f.status==='delivered'&&r.status==='delivered'){
@@ -481,16 +485,16 @@ function explain(w,a){
     const gwToFw=gwHop&&gwHop.route&&gwHop.route.nh==='VirtualAppliance';
     const L=[
       'VNet peering is non-transitive. '+NAME[from]+' is peered only with the hub, so it has NO system route for '+NAME[to]+' ('+spPfx(to)+').',
-      'For destination '+EP[to].ip+', '+NAME[from]+'\u2019s effective routes contain two candidates: '+d0txt+' and 172.16.0.0/12 → Virtual network gateway (BGP, because on-prem advertises the whole RFC1918 range and "Propagate gateway routes" is ON).',
+      'For destination '+EP[to].ip+', '+NAME[from]+'\u2019s effective routes contain two candidates: '+d0txt+' and '+erCover()+' → Virtual network gateway (BGP, because on-prem advertises a range covering the spokes and "Propagate gateway routes" is ON).',
       'Azure ALWAYS applies longest-prefix match first; the "UDR beats BGP" rule only applies to identical prefixes. /12 is more specific than /0, so the BGP route wins and the default route is never used for this destination.',
       'Why doesn\u2019t the ER Gateway simply send it back to '+NAME[to]+'? Because for outbound traffic the ER Gateway does not forward packets at all. It is mainly a control-plane component: it learns routes via BGP and programs them into every NIC of the hub and peered spokes. The next hop "Virtual network gateway" points to the MSEE edge routers of the circuit (the next-hop IPs in effective routes are MSEE addresses). The packet goes from the VM host straight onto the circuit — the gateway never gets a chance to make a decision. (The diagram draws the packet via the gateway icon for readability.)',
-      'At the MSEE (the ExpressRoute peering location, possibly hundreds of km away) the lookup for '+EP[to].ip+' finds 172.16.0.0/12 from on-prem and '+spPfx(to)+' from the Azure ER Gateway (advertised thanks to gateway transit / "Use remote gateways"). Longest prefix wins again: /24 beats /12, so the MSEE U-turns the packet back towards Azure.',
+      'At the MSEE (the ExpressRoute peering location, possibly hundreds of km away) the lookup for '+EP[to].ip+' finds '+erCover()+' from on-prem and '+spPfx(to)+' from the Azure ER Gateway (advertised thanks to gateway transit / "Use remote gateways"). Longest prefix wins again: /24 is more specific than '+erCover()+', so the MSEE U-turns the packet back towards Azure.',
       'Inbound, the packet passes the ER Gateway. The GatewaySubnet lookup '+(gwHop&&gwHop.route?'uses '+gwHop.route.prefix+' → '+nhName(gwHop.route):'uses its system peering route')+(gwToFw?', so the packet is handed to Azure Firewall first and then delivered to '+NAME[to]+'.':', which delivers it directly to '+NAME[to]+'.')];
     if(fwFail)L.push('The two directions do NOT take the same path: one direction goes through Azure Firewall and the other hairpins past it. On its own a hairpin only makes traffic slow — here it also breaks the session (see the firewall asymmetry warning).');
     else if(a.W.some(x=>x.dev==='vnra'))L.push('The two directions do NOT take the same path: one direction is forwarded by the VNRA and the other hairpins over ExpressRoute. The VNRA does not inspect, so packets still arrive — but the session is asymmetric (see the VNRA asymmetry warning) and the hairpinned direction is slow and depends on ExpressRoute.');
     else if(nonMirror)L.push('Both directions hairpin over ExpressRoute and are then handed to Azure Firewall by the GatewaySubnet route table, so the firewall still sees both halves of the session and the flow works — but the reply is not the mirror of the request, and traffic is only inspected after it has already left Azure and come back. Every packet travels to the peering location and back: extra latency, circuit bandwidth consumed twice, limited by ER Gateway throughput, and broken whenever ExpressRoute is down.');
     else L.push('The reply follows the mirror path, so the flow is symmetric — but every packet travels to the peering location and back: extra latency, circuit bandwidth consumed twice, limited by ER Gateway throughput, '+(viaFw?'':'invisible to Azure Firewall, ')+'and broken whenever ExpressRoute is down.');
-    L.push(d0.src==='User'?'Side note: if on-prem advertised only 192.168.0.0/16 instead of the RFC1918 summary, there would be no hairpin — spoke-to-spoke would then follow the 0.0.0.0/0 UDR to '+nhName(d0)+' (the 0/0 UDR also overrides the system 172.16.0.0/12 → None route).':'Side note: if on-prem advertised only 192.168.0.0/16 instead of the RFC1918 summary, there would be no hairpin — but without a 0.0.0.0/0 UDR spoke-to-spoke would then be DROPPED by the system route 172.16.0.0/12 → None.');
+    L.push(d0.src==='User'?'Side note: if on-prem advertised nothing that covers the spokes (for example only 192.168.0.0/16), there would be no hairpin — spoke-to-spoke would then follow the 0.0.0.0/0 UDR to '+nhName(d0)+' (the 0/0 UDR also overrides the system None routes).':'Side note: if on-prem advertised nothing that covers the spokes (for example only 192.168.0.0/16), there would be no hairpin — but without a 0.0.0.0/0 UDR spoke-to-spoke would then be DROPPED by the system route 172.16.0.0/12 → None.');
     L.push('Fix: give every spoke a more specific route for Azure, e.g. UDR 172.16.0.0/16 → Azure Firewall (inspection) or → VNRA (high-throughput forwarding). /16 beats /12, so traffic stays inside Azure.');
     return L;
   }
@@ -540,7 +544,7 @@ function explain(w,a){
       (TABLES[h.table]&&TABLES[h.table].routes.some(r=>r.src==='User'&&r.prefix==='0.0.0.0/0')?'':'There is no 0.0.0.0/0 user-defined route in '+TBL[h.table]+' (a 0.0.0.0/0 UDR would invalidate these None routes and catch the traffic), so longest-prefix match picks '+h.route.prefix+' → None and the packet to '+dst+' is discarded at '+NAME[h.node]+'.'),
       'Fix: restore the ExpressRoute routes (enable propagation / Use remote gateways), or add explicit UDRs for the private ranges (e.g. 172.16.0.0/16 and 192.168.0.0/16 → Azure Firewall / VNRA) that are reachable without ExpressRoute.'];
     if(h&&h.route&&h.route.nh==='Null0')return [
-      'On-prem originates the RFC1918 aggregates (10/8, 172.16/12) towards ExpressRoute and points them to Null0 locally, so it only knows the Azure prefixes it learns from the MSEE via BGP.',
+      'On-prem originates its configured aggregates ('+(erList().join(', ')||'none')+') towards ExpressRoute and points them to Null0 locally, so it only knows the Azure prefixes it learns from the MSEE via BGP.',
       'Here the Azure gateway does not advertise '+dst+'\u2019s prefix because "Use remote gateways" is off on the spoke peering (no gateway transit).',
       'The only match left for '+dst+' is the aggregate '+h.route.prefix+' → Null0, so the on-prem router discards the packet.'];
     return ['The packet reaches '+NAME[h?h.node:p.nodes[p.nodes.length-1]]+' but no usable route exists: '+p.reason+'.'];
@@ -777,13 +781,17 @@ const TOG=[
  ['vnraGw','GatewaySubnet route table: spoke /24s → VNRA','On-prem-to-spoke via the routing appliance (needed for symmetry). Keep "Propagate gateway routes" ON on the GatewaySubnet route table.']];
 const CONFLICT={dprDefFw:'dprDefVnra',dprDefVnra:'dprDefFw',udrSpokeToFw:'vnraSpoke',vnraSpoke:'udrSpokeToFw',udrOnpremToFw:'vnraOnprem',vnraOnprem:'udrOnpremToFw',gwSubnetRt:'vnraGw',vnraGw:'gwSubnetRt'};
 const VSUB=['vnraSpoke','vnraOnprem','vnraGw','dprDefVnra'];
-function buildToggles(){
-  const c=$('toggles');c.innerHTML='';let sec=null,body=null,cnt=null,n=0,tot=0;
+const CMAP={onprem:['On-prem'],msee:['On-prem'],fw:['VNet peering — hub','Inspection'],gw:['VNet peering — hub','Inspection','Disable'],vnra:['Virtual Network Routing'],spoke1:['VNet peering — spoke','Spoke route','Inspection'],spoke2:['VNet peering — spoke','Spoke route','Inspection']};
+function rebuildCfg(){buildToggles();if(!$('pCfg').hidden)buildToggles($('cfgBody'),CMAP[cfgFor]);}
+let cfgFor=null;
+function buildToggles(c,only){
+  const modal=!!c;c=c||$('toggles');c.innerHTML='';let skip=false;let sec=null,body=null,cnt=null,n=0,tot=0;
   const close=()=>{if(cnt)cnt.textContent=tot?n+'/'+tot+' on':'';};
   TOG.forEach(([k,l,d,fl])=>{
-    if(k==='#'){close();n=0;tot=0;sec=document.createElement('details');sec.className='sec';sec.open=!(secClosed[l]);sec.addEventListener('toggle',()=>{secClosed[l]=!sec.open;});
+    if(k==='#'){close();n=0;tot=0;skip=!!only&&!only.some(p=>l.startsWith(p));if(skip){cnt=null;return;}sec=document.createElement('details');sec.className='sec';sec.open=modal||!(secClosed[l]);if(!modal)sec.addEventListener('toggle',()=>{secClosed[l]=!sec.open;});
       const s=document.createElement('summary');const h=document.createElement('span');h.textContent=l;cnt=document.createElement('span');cnt.className='cnt';s.appendChild(h);s.appendChild(cnt);sec.appendChild(s);
       body=document.createElement('div');body.className='secb';if(d){const p=document.createElement('p');p.className='sd';p.textContent=d;body.appendChild(p);}sec.appendChild(body);c.appendChild(sec);return;}
+    if(skip)return;
     if(k==='@erPfx'){const w=document.createElement('div');w.className='pfx';const b=document.createElement('b');b.textContent=l;const i=document.createElement('input');i.type='text';i.id='t_erPfx';i.value=cfg.erPfx;i.spellcheck=false;
       const m=document.createElement('div');m.className='pfxmsg';const sm=document.createElement('small');sm.textContent=d;
       const chk=()=>{const r=parseCidrs(i.value);i.classList.toggle('bad',r.bad.length>0);m.textContent=r.bad.length?'Ignored (invalid CIDR): '+r.bad.join(', '):r.ok.length?'Advertising '+r.ok.length+' prefix'+(r.ok.length>1?'es':'')+': '+r.ok.join(', '):'Nothing advertised — on-prem learns routes but advertises none.';m.className='pfxmsg'+(r.bad.length?' err':'');};
@@ -795,9 +803,10 @@ function buildToggles(){
     if(VSUB.includes(k)){i.disabled=!cfg.vnra;w.classList.add('sub');if(!cfg.vnra)w.style.opacity='.5';}
     i.addEventListener('change',()=>{cfg[k]=i.checked;if(i.checked&&CONFLICT[k]&&(k.startsWith('vnra')?cfg.vnra:true))cfg[CONFLICT[k]]=false;
       if(k==='vnra'&&i.checked&&!VSUB.some(x=>cfg[x])){['vnraSpoke','vnraOnprem','vnraGw'].forEach(x=>{cfg[x]=true;cfg[CONFLICT[x]]=false;});}
-      buildToggles();recompute(true);});
+      rebuildCfg();recompute(true);});
     const s=document.createElement('div');s.innerHTML='<b></b><small></small>';const b=s.querySelector('b');b.textContent=l;if(fl==='prev'){const p=document.createElement('span');p.className='badge-prev';p.textContent='PREVIEW';b.appendChild(p);}s.querySelector('small').textContent=d;w.appendChild(s);w.appendChild(i);body.appendChild(w);});
   close();
+  if(modal)return;
   const nt=document.createElement('p');nt.className='note';nt.textContent='A route table can hold only one route per prefix, so the matching Firewall and VNRA options switch each other off. Enabling the VNRA turns on all three VNRA routes (recommended pattern: private → VNRA, 0.0.0.0/0 → Azure Firewall).';c.appendChild(nt);
 }
 const secClosed={};
@@ -988,12 +997,19 @@ function init(){
     svg.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);
     $('zIn').addEventListener('click',()=>zoom(.7));$('zOut').addEventListener('click',()=>zoom(1/.7));$('zRst').addEventListener('click',()=>{v=V0.slice();apply();});
   })();
-  $('btnReset').addEventListener('click',()=>{Object.assign(cfg,BASE);buildToggles();recompute(true);});
+  $('btnReset').addEventListener('click',()=>{Object.assign(cfg,BASE);rebuildCfg();recompute(true);});
   const setCfg=o=>{document.body.classList.toggle('cfgopen',o);$('btnCfg').setAttribute('aria-expanded',o);};
   $('btnCfg').addEventListener('click',()=>setCfg(!document.body.classList.contains('cfgopen')));
   $('btnCloseCfg').addEventListener('click',()=>setCfg(false));
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){setCfg(false);$('pRoutes').hidden=true;}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){setCfg(false);$('pRoutes').hidden=true;hideCtx();if(!$('pCfg').hidden)closeCfg();}});
   $('rtClose').addEventListener('click',()=>$('pRoutes').hidden=true);
+  const closeCfg=()=>{$('pCfg').hidden=true;buildToggles();};
+  $('cfgClose').addEventListener('click',closeCfg);$('pCfg').addEventListener('click',e=>{if(e.target===$('pCfg'))closeCfg();});
+  const ctx=$('ctx');let ctxT=null;const hideCtx=()=>{ctx.hidden=true;};
+  document.querySelectorAll('#nodes .node').forEach(n=>n.addEventListener('contextmenu',e=>{const t=n.getAttribute('data-t');if(!t)return;e.preventDefault();ctxT=t;$('tip').hidden=true;ctx.hidden=false;ctx.style.left=Math.min(e.clientX,innerWidth-210)+'px';ctx.style.top=Math.min(e.clientY,innerHeight-100)+'px';ctx.querySelector('button').focus();}));
+  document.addEventListener('click',e=>{if(!ctx.contains(e.target))hideCtx();});window.addEventListener('blur',hideCtx);$('topo').addEventListener('wheel',hideCtx);
+  $('ctxRt').addEventListener('click',()=>{hideCtx();$('selTable').value=ctxT;renderRoutes();$('pRoutes').hidden=false;});
+  $('ctxCfg').addEventListener('click',()=>{hideCtx();cfgFor=ctxT;$('cfgTitle').textContent='Configure — '+NAME[ctxT];$('pCfg').hidden=false;buildToggles($('cfgBody'),CMAP[ctxT]);});
   $('pRoutes').addEventListener('click',e=>{if(e.target===$('pRoutes'))$('pRoutes').hidden=true;});
   const themeBtn=$('btnTheme');
   const curTheme=()=>document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
