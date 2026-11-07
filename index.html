@@ -131,7 +131,15 @@ tr.used td{background:var(--warnbg);font-weight:600}
 .tg small{display:block;color:var(--muted)}
 .base{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--okbg);color:var(--ok);font-weight:700}
 .base.mod{background:var(--warnbg);color:var(--warn)}
-.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend{position:absolute;inset-block-start:6px;inset-inline-end:6px;z-index:5;display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--muted);padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);opacity:.96}
+.mxwin{border:2px solid var(--fwd)!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--fwd) 25%,transparent),0 6px 18px rgba(0,0,0,.3)!important;font-size:12px!important;padding:8px 10px!important}
+.mxwin.pulse{animation:mxp 1.8s ease-in-out infinite}
+@keyframes mxp{50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--fwd) 12%,transparent),0 6px 18px rgba(0,0,0,.3)}}
+.mxwin h3{font-size:14px!important}
+.mxwin table{font-size:12px!important}.mxwin th,.mxwin td{padding:3px 7px!important}
+.mxwin .mx td.c{border:1px solid var(--line);transition:transform .1s}
+.mxwin .mx td.c:hover{transform:scale(1.08);outline:2px solid var(--fwd);background:color-mix(in srgb,var(--fwd) 18%,transparent)}
+.mxwin .note{font-size:11px!important;color:var(--fwd);font-weight:600}
 .legend i{display:inline-block;inline-size:22px;block-size:4px;border-radius:2px;vertical-align:middle;margin-inline-end:6px}
 .note{font-size:12px;color:var(--muted);margin:6px 0 0 0}
 .speed{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
@@ -165,10 +173,10 @@ tr.used td{background:var(--warnbg);font-weight:600}
       <h2>Topology &amp; live traffic flow <span><span class="base" id="baseBadge">Baseline configuration</span></span></h2>
     </div>
     <div class="topowrap">
-    <div class="mxwin">
-      <div class="bar"><h3>Flow matrix</h3><div class="controls"><button class="primary" id="btnPlay" title="Replay the selected flow">▶</button><button id="btnOverview" title="Overview: private vs Internet">Overview</button></div></div>
+    <div class="mxwin pulse" id="mxwin">
+      <div class="bar"><h3>👆 Flow matrix</h3><div class="controls"><button class="primary" id="btnPlay" title="Replay the selected flow">▶</button><button id="btnOverview" title="Overview: private vs Internet">Overview</button></div></div>
       <table class="mx"><thead id="mxHead"></thead><tbody id="mxBody"></tbody></table>
-      <p class="note">Click a cell to animate that flow.</p>
+      <p class="note">▶ Click any flow to animate it</p>
     </div>
     <svg id="topo" viewBox="0 18 1140 565" role="img" aria-label="Hub and spoke topology diagram">
       <defs>
@@ -178,18 +186,17 @@ tr.used td{background:var(--warnbg);font-weight:600}
       <g id="nodes"></g>
       <g id="flows"></g>
     </svg>
+    <div class="legend">
+      <span><i style="background:var(--priv)"></i>Private, direct</span>
+      <span><i style="background:var(--pub)"></i>Internet</span>
+      <span><i style="background:var(--insp)"></i>Via firewall</span>
+      <span><i style="background:var(--vnra)"></i>Via VNRA</span>
+      <span><i style="background:var(--erb)"></i>ExpressRoute</span>
+      <span><i style="background:var(--muted)"></i>Peering</span>
+      <span>Dashes = request<br>Dots = reply</span>
+    </div>
     </div>
     <div id="flowCls"></div>
-    <div class="legend">
-      <span><i style="background:var(--priv)"></i>Private traffic (direct, no firewall)</span>
-      <span><i style="background:var(--pub)"></i>Public / Internet traffic (via Azure Firewall)</span>
-      <span><i style="background:var(--insp)"></i>Private traffic via firewall (what-if)</span>
-      <span><i style="background:var(--vnra)"></i>Private traffic via Routing Appliance (VNRA)</span>
-      <span>Long dashes = forward · dots = return</span>
-      <span><i style="background:var(--erb)"></i>ExpressRoute</span>
-      <span><i style="background:var(--muted)"></i>VNet peering (dashed)</span>
-      <span>Click any spoke, the firewall, the gateway, the circuit or on-prem to view its effective routes.</span>
-    </div>
   </div>
   <div class="card">
     <div class="tabs" id="tabs" role="tablist">
@@ -615,7 +622,7 @@ function drawTopo(){
   });
 
   const LB=el('g',{id:'lblLayer'},null);$('topo').insertBefore(LB,$('flows'));
-  [[252,470,'Private peering'],[252,516,'primary / secondary'],[500,478,'ER connection']].forEach(([x,y,t])=>el('text',{x,y,'text-anchor':'middle',class:'xs lbltop'},LB,t));
+  [[252,470,'Private peering'],[252,516,'primary / secondary'],[500,462,'ER connection']].forEach(([x,y,t])=>el('text',{x,y,'text-anchor':'middle',class:'xs lbltop'},LB,t));
   let tip=$('tip');if(!tip){tip=document.createElement('div');tip.id='tip';tip.hidden=true;document.body.appendChild(tip);}
   document.querySelectorAll('#nodes .node').forEach(n=>{
     n.addEventListener('mouseenter',()=>{
@@ -649,38 +656,49 @@ function refreshLabels(){
 }
 // Lanes: private traffic between the ER Gateway and a spoke uses the lower-right lane (never near the firewall);
 // firewall traffic uses the peering junction next to the firewall subnet.
+const LANE={fw:850,vnra:830,ergw:870},LW=520;
 function pts(nodes,off){
-  const P=[];const isS=n=>/^spoke/.test(n);
-  for(let k=0;k<nodes.length;k++){
-    const n=nodes[k],p=nodes[k-1],nx=nodes[k+1];
-    if(k>0){
-      const FJ=i=>SPY[i]>360?[[875,SPY[i]],[812,222]]:[J(i)];
-      if(isS(p)&&n==='fw')FJ(+p.slice(5)).forEach(q=>P.push(q));
-      if(p==='fw'&&isS(n))FJ(+n.slice(5)).slice().reverse().forEach(q=>P.push(q));
-      if(isS(p)&&n==='ergw'){P.push([860,SPY[+p.slice(5)]]);P.push([805,536]);P.push([640,536]);}
-      if(p==='ergw'&&isS(n)){P.push([640,536]);P.push([805,536]);P.push([860,SPY[+n.slice(5)]]);}
-      if(isS(p)&&n==='vnra'){P.push([860,SPY[+p.slice(5)]]);P.push([812,353]);}
-      if(p==='vnra'&&isS(n)){P.push([812,353]);P.push([860,SPY[+n.slice(5)]]);}
-      if(p==='fw'&&n==='ergw'){P.push([548,222]);P.push([548,488]);}
-      if(p==='ergw'&&n==='fw'){P.push([548,488]);P.push([548,222]);}
-    }
-    if(n==='msee'&&p==='ergw'&&nx&&nx!=='onprem'){ // hairpin U-turn around the MSEE
-      P.push([440,470]);P.push([330,458]);P.push([300,488]);P.push([330,518]);P.push([440,506]);continue;}
-    P.push(A[n]);
-  }
-  // remove consecutive duplicates
+  const isS=n=>/^spoke/.test(n),isD=n=>n==='fw'||n==='vnra'||n==='ergw';
+  const side=(n,m)=>{
+    if(isS(m))return 'E';
+    if(n==='ergw'&&(m==='msee'||m==='onprem'||m==='fw'))return 'W';
+    if(n==='fw'&&m==='ergw')return 'W';
+    if(n==='msee')return m==='ergw'?'E':'W';
+    if(n==='onprem')return 'E';
+    if(m==='internet')return 'N';
+    if(n==='internet')return 'S';
+    return A[m][1]<A[n][1]?'N':'S';};
+  const needVia=(a,b)=>isS(a)||isS(b)||(a==='fw'&&b==='ergw')||(a==='ergw'&&b==='fw');
+  const N=nodes.length,sIn=Array(N).fill(0),sOut=Array(N).fill(0);
+  // a device that is entered and left on the same side gets two parallel lanes, so the flow never doubles back on itself
+  for(let k=1;k<N-1;k++)if(side(nodes[k],nodes[k-1])===side(nodes[k],nodes[k+1])){sIn[k]=-9;sOut[k]=9;}
+  for(let k=1;k<N;k++)if(!needVia(nodes[k-1],nodes[k])){
+    if(sOut[k-1]===0&&sIn[k]!==0)sOut[k-1]=sIn[k];else if(sIn[k]===0&&sOut[k-1]!==0)sIn[k]=sOut[k-1];}
+  const anc=(k,io)=>{const n=nodes[k],m=io?nodes[k+1]:nodes[k-1];const s=(io?sOut:sIn)[k];const a=A[n];
+    if(!s)return [a[0],a[1]];const sd=m?side(n,m):'E';return (sd==='E'||sd==='W')?[a[0],a[1]+s]:[a[0]+s,a[1]];};
+  const P=[];let prev=null;
+  nodes.forEach((n,k)=>{
+    const ai=anc(k,0),ao=anc(k,1);
+    if(k>0){const p=nodes[k-1];
+      if(isS(p)&&isD(n)){const l=LANE[n];P.push([l,prev[1]],[l,ai[1]]);}
+      else if(isD(p)&&isS(n)){const l=LANE[p]+((sIn[k-1]||sOut[k-1])?14:0);P.push([l,prev[1]],[l,ai[1]]);}
+      else if(needVia(p,n))P.push([LW,prev[1]],[LW,ai[1]]);}
+    P.push(ai);if(ao[0]!==ai[0]||ao[1]!==ai[1])P.push(ao);
+    prev=ao;});
   const Q=P.filter((p,i)=>i===0||p[0]!==P[i-1][0]||p[1]!==P[i-1][1]);
   return Q.map(p=>[p[0]+off,p[1]+off]);
 }
-function smooth(P){ // Catmull-Rom -> cubic Bezier
+function smooth(P,r){ // orthogonal polyline with rounded corners
+  r=r||14;
   if(P.length<2)return P.length?'M'+P[0][0]+','+P[0][1]+' L'+(P[0][0]+0.1)+','+P[0][1]:'';
   let d='M'+P[0][0]+','+P[0][1];
-  for(let i=0;i<P.length-1;i++){
-    const p0=P[i-1]||P[i],p1=P[i],p2=P[i+1],p3=P[i+2]||p2,t=0.9;
-    const c1=[p1[0]+(p2[0]-p0[0])/6*t,p1[1]+(p2[1]-p0[1])/6*t],c2=[p2[0]-(p3[0]-p1[0])/6*t,p2[1]-(p3[1]-p1[1])/6*t];
-    d+=' C'+c1.map(v=>v.toFixed(1)).join(',')+' '+c2.map(v=>v.toFixed(1)).join(',')+' '+p2[0]+','+p2[1];
+  for(let i=1;i<P.length-1;i++){
+    const a=P[i-1],b=P[i],c=P[i+1];const l1=Math.hypot(b[0]-a[0],b[1]-a[1]),l2=Math.hypot(c[0]-b[0],c[1]-b[1]);
+    const rr=Math.min(r,l1/2,l2/2);
+    const p1=[b[0]-(b[0]-a[0])/l1*rr,b[1]-(b[1]-a[1])/l1*rr],p2=[b[0]+(c[0]-b[0])/l2*rr,b[1]+(c[1]-b[1])/l2*rr];
+    d+=' L'+p1[0].toFixed(1)+','+p1[1].toFixed(1)+' Q'+b[0]+','+b[1]+' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);
   }
-  return d;
+  const e=P[P.length-1];return d+' L'+e[0]+','+e[1];
 }
 function legClass(src,dst,p){if(src==='internet'||dst==='internet')return 'pub';return p.nodes.includes('fw')?'insp':p.nodes.includes('vnra')?'vnra':'priv';}
 const SRC_OPTS=['spoke1','spoke2','onprem'];
@@ -757,7 +775,7 @@ function renderWarns(){
   const c=legClass(res.src,res.dst,res.f);
   const txt={priv:'PRIVATE traffic (RFC1918) — routed directly via peering / ExpressRoute, Azure Firewall is NOT in the path',pub:'PUBLIC traffic (Internet) — forced through Azure Firewall by the 0.0.0.0/0 route, SNAT to the firewall public IP',insp:'PRIVATE traffic routed through Azure Firewall (what-if configuration)',vnra:'PRIVATE traffic forwarded by the Virtual Network Routing Appliance (high throughput, no inspection)'}[c];
   const bypassTxt=res.f.status==='dropped'?'PUBLIC traffic (Internet) — no outbound path: private subnet without firewall route or NAT Gateway':'PUBLIC traffic (Internet) — goes straight out, firewall bypassed';
-  $('flowCls').innerHTML='';const s=document.createElement('span');s.className='cls '+c;s.textContent=(c==='pub'&&!res.f.nodes.includes('fw'))?bypassTxt:txt;$('flowCls').appendChild(s);
+  $('flowCls').innerHTML='';
   const v=document.createElement('span');v.className='cls verdict '+res.lvl;v.textContent=verdict(res);$('flowCls').appendChild(v);
   $('flowTitle').textContent=EP[res.src].label+' ('+EP[res.src].ip+') → '+EP[res.dst].label+' ('+EP[res.dst].ip+')';
 }
@@ -809,6 +827,10 @@ function dropMsg(p,who){const h=p.hops[p.hops.length-1];
   if(h&&h.route&&h.route.nh==='Internet')return '✖ '+who+' dropped at '+NAME[h.node]+': private subnet, no outbound method (no 0/0 → Firewall, no NAT Gateway)';const at=NAME[h?h.node:p.nodes[0]];
   if(h&&h.route)return '✖ '+who+' dropped at '+at+': '+h.route.prefix+' → '+nhName(h.route);
   return '✖ '+who+' dropped at '+at;}
+function cover(F){ // redraw node boxes above the flow lines so lines end cleanly at each box
+  const g=el('g',{class:'cover','pointer-events':'none'},F);
+  ['fw','ergw','msee','onprem','spoke1','spoke2','internet'].concat(cfg.vnra?['vnra']:[]).forEach(id=>el('use',{href:'#n-'+id},g));
+}
 function play(){
   stopAnim();const F=$('flows');
   const legs=[{p:res.f,ret:false,off:-4,c:legClass(res.src,res.dst,res.f),gh:res.ghost&&res.ghost.f}];
@@ -832,6 +854,7 @@ function play(){
     l.marks=l.p.nodes.map(()=>0);let from=0;
     l.p.nodes.forEach((n,i)=>{const a=A[n];let b=from,bd=1e9;for(let s=from;s<=l.len;s+=3){const q=l.path.getPointAtLength(s);const dd=Math.hypot(q.x-a[0],q.y-a[1]);if(dd<bd-0.5){bd=dd;b=s;}else if(bd<6&&dd>bd+20)break;}l.marks[i]=b;from=b;});
   });
+  cover(F);
   const pk=el('circle',{r:6,class:'pkt',filter:'url(#glow)'},F);const plbl=el('text',{class:'pktlbl'},F,'');
   let li=0,t0=null,hpShown=false;let tok=null;
   const step=ts=>{
@@ -872,6 +895,7 @@ function overview(){
       el('path',{d:smooth(pts(a.f.nodes,off)),class:'ov c-'+c},F);
     });
   });
+  cover(F);
   ['ergw','msee','onprem','fw','internet'].forEach(n=>{const e=document.getElementById('n-'+n);if(e)e.classList.add('active');});
   document.documentElement.style.setProperty('--hl','var(--muted)');
   $('flowTitle').textContent='Overview — every spoke to on-prem (private) and to the Internet (public)';
@@ -888,6 +912,7 @@ function select(s,d,go){
 function recompute(go){buildTables();refreshLabels();select(cur.src,cur.dst,go);}
 function init(){
   drawTopo();fillSelects();buildToggles();
+  $('mxwin').addEventListener('click',()=>$('mxwin').classList.remove('pulse'));
   $('btnPlay').addEventListener('click',()=>select(cur.src,cur.dst,true));
   $('selTable').addEventListener('change',renderRoutes);
   $('btnOverview').addEventListener('click',overview);
