@@ -24,18 +24,18 @@
   const C = { internet: [635, 52], onprem: [125, 545], msee: [370, 545], gw: [635, 545], fw: [635, 215], vnra: [635, 375], spoke1: [1055, 245], spoke2: [1055, 525] };
   const LINKS = {
     'onprem|msee': [[220, 545], [345, 545]],
-    'msee|gw': [[395, 545], [560, 545]],
-    'gw|fw': [[560, 555], [475, 555], [475, 215], [560, 215]],
-    'gw|vnra': [[560, 535], [485, 535], [485, 375], [560, 375]],
-    'fw|vnra': [[635, 235], [635, 355]],
-    'spoke1|fw': [[930, 245], [805, 245], [805, 205], [710, 205]],
-    'spoke1|vnra': [[930, 245], [805, 245], [805, 365], [710, 365]],
-    'spoke1|gw': [[930, 245], [805, 245], [805, 535], [710, 535]],
-    'spoke2|fw': [[930, 525], [785, 525], [785, 225], [710, 225]],
-    'spoke2|vnra': [[930, 525], [785, 525], [785, 385], [710, 385]],
-    'spoke2|gw': [[930, 525], [825, 525], [825, 555], [710, 555]],
-    'fw|internet': [[635, 195], [635, 72]],
-    'vnra|internet': [[560, 355], [500, 355], [500, 40], [575, 40]],
+    'msee|gw': [[395, 545], [440, 545], [440, 573], [560, 573]],
+    'gw|fw': [[560, 559], [475, 559], [475, 215], [560, 215]],
+    'gw|vnra': [[560, 545], [485, 545], [485, 375], [560, 375]],
+    'fw|vnra': [[635, 251], [635, 339]],
+    'spoke1|fw': [[930, 245], [805, 245], [805, 215], [710, 215]],
+    'spoke1|vnra': [[930, 245], [805, 245], [805, 375], [710, 375]],
+    'spoke1|gw': [[930, 245], [805, 245], [805, 545], [710, 545]],
+    'spoke2|fw': [[930, 525], [785, 525], [785, 229], [710, 229]],
+    'spoke2|vnra': [[930, 525], [785, 525], [785, 389], [710, 389]],
+    'spoke2|gw': [[930, 525], [825, 525], [825, 559], [710, 559]],
+    'fw|internet': [[635, 179], [635, 72]],
+    'vnra|internet': [[560, 403], [500, 403], [500, 40], [575, 40]],
     'spoke1|internet': [[1055, 190], [1055, 52], [675, 52]],
     'spoke2|internet': [[1180, 525], [1200, 525], [1200, 40], [675, 40]],
     'onprem|internet': [[125, 500], [125, 52], [570, 52]]
@@ -45,9 +45,20 @@
     if (LINKS[b + '|' + a]) return LINKS[b + '|' + a].slice().reverse();
     return null;
   }
+  const PILL = { fw: 1, vnra: 1, gw: 1 };
   function pathFor(nodes) {
     const seq = nodes.filter((n, i) => n !== 'hub' && n !== nodes[i - 1]), raw = [];
-    for (let i = 1; i < seq.length; i++) { const p = linkPts(seq[i - 1], seq[i]); if (p) p.forEach(pt => raw.push(pt)); }
+    for (let i = 1; i < seq.length; i++) {
+      const p = linkPts(seq[i - 1], seq[i]); if (!p) continue;
+      const last = raw[raw.length - 1], n = seq[i - 1];
+      if (last && PILL[n] && last[0] !== C[n][0] && p[0][0] !== C[n][0]) {
+        const cx = C[n][0], dir = last[0] > cx ? 1 : -1, ix = cx + dir * 55, o = p[0], od = o[0] > cx ? 1 : -1, ox = cx + od * 55;
+        raw.push([ix, last[1]]);
+        if (dir !== od) { const my = (last[1] + o[1]) / 2; raw.push([ix, my], [ox, my]); }
+        raw.push([ox, last[1] === o[1] ? last[1] : o[1]]);
+      }
+      p.forEach(pt => raw.push(pt));
+    }
     const out = [];
     raw.forEach(pt => {
       const l = out[out.length - 1];
@@ -120,18 +131,18 @@
       const n = node(id, on ? '' : 'off');
       el('rect', { class: 'shape subbox', x: 500, y, width: 270, height: 130, rx: 10 }, null, n);
       el('text', { class: 'sub', x: 635, y: y + 22 }, title, n);
-      el('rect', { class: 'shape', x: 560, y: y + 45, width: 150, height: 40, rx: 20 }, null, n);
-      el('text', { class: 'lbl', x: 635, y: y + 70 }, glyph, n);
-      el('text', { class: 'sub', x: 635, y: y + 110 }, sublabel, n);
+      el('rect', { class: 'shape', x: 560, y: y + 29, width: 150, height: 72, rx: 20 }, null, n);
+      el('text', { class: 'lbl', x: 635, y: y + 49 }, glyph, n);
+      el('text', { class: 'sub', x: 635, y: y + 124 }, sublabel, n);
     };
     sub('fw', 150, ap.fw.cidr, ap.fw.enabled ? ap.fw.ip + (ap.fw.snat ? ' · SNAT' : '') : 'not deployed', ap.fw.name, ap.fw.enabled);
     sub('vnra', 310, ap.vnra.cidr, ap.vnra.enabled ? ap.vnra.ip : 'not deployed — click to enable', 'VNRA', ap.vnra.enabled);
     const gwn = node('gw');
     el('rect', { class: 'shape subbox', x: 500, y: 480, width: 270, height: 130, rx: 10 }, null, gwn);
     el('text', { class: 'sub', x: 635, y: 502 }, 'GatewaySubnet ' + hub.gw.cidr, gwn);
-    el('rect', { class: 'shape', x: 560, y: 525, width: 150, height: 40, rx: 20 }, null, gwn);
-    el('text', { class: 'lbl', x: 635, y: 550 }, hub.gw.name, gwn);
-    el('text', { class: 'sub', x: 635, y: 590 }, hub.gw.rt.disablePeering ? 'peering routes disabled (preview)' : 'GatewaySubnet', gwn);
+    el('rect', { class: 'shape', x: 560, y: 509, width: 150, height: 72, rx: 20 }, null, gwn);
+    el('text', { class: 'lbl', x: 635, y: 529 }, hub.gw.name, gwn);
+    el('text', { class: 'sub', x: 635, y: 604 }, hub.gw.rt.disablePeering ? 'peering routes disabled (preview)' : 'GatewaySubnet', gwn);
 
     RS.SPOKES.forEach(id => {
       const s = scn.spokes[id], n = node(id), y = C[id][1] - 55;
@@ -167,10 +178,10 @@
   function drawPaths(a) {
     const g = $('#world');
     const add = (res, cls) => {
-      const pts = offsetPts(pathFor(res.nodes), 6);
+      const pts = offsetPts(pathFor(res.nodes), 5);
       if (pts.length < 2) return;
       const d = rounded(pts, 10);
-      const pe = el('path', { class: 'path ' + cls + (res.status === 'dropped' ? ' dropped' : ''), d }); g.insertBefore(pe, g.querySelector('.nd'));
+      const pe = el('path', { class: 'path ' + cls + (res.status === 'dropped' ? ' dropped' : ''), d }); g.appendChild(pe);
       const dot = el('circle', { class: 'dot', r: 5, fill: res.status === 'dropped' ? 'var(--err)' : cls === 'req' ? 'var(--acc)' : 'var(--ok)' }, null, g);
       const m = el('animateMotion', { dur: Math.max(3, pts.length * 0.8) + 's', repeatCount: 'indefinite', path: d }, null, dot);
       if (res.status === 'dropped') {
