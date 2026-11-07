@@ -118,7 +118,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
 .mx td.na{color:var(--muted)}
 .mx td.c:hover{outline:2px solid var(--fwd)}
 .mx td.selc{outline:2px solid var(--ink)}
-.topowrap{position:relative;flex:1;min-height:0}#topo{max-width:none;width:100%;height:100%;max-height:none;margin:0;display:block}html,body{height:100%}body{display:flex;flex-direction:column;overflow:hidden}main{flex:1;min-height:0;display:flex;flex-direction:column}.stage{flex:1;min-height:0;display:flex;flex-direction:column;margin-block-end:0}.stage>.pane{overflow:auto;min-height:0}.stage>.pane.sel{flex:1}.stage>#pTopo.sel{display:flex;flex-direction:column}.dtl{display:none}#tip{position:fixed;z-index:50;pointer-events:none;max-width:300px;padding:8px 10px;border-radius:8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.35);font-size:12px;line-height:1.5}#tip b{display:block;margin-bottom:2px}#tip[hidden]{display:none}
+.topowrap{position:relative;flex:1;min-height:0}#topo{max-width:none;width:100%;height:100%;max-height:none;margin:0;display:block}html,body{height:100%}body{display:flex;flex-direction:column;overflow:hidden}main{flex:1;min-height:0;display:flex;flex-direction:column}.stage{flex:1;min-height:0;display:flex;flex-direction:column;margin-block-end:0}.stage>.pane{overflow:auto;min-height:0}.stage>.pane.sel{flex:1}.stage>#pTopo.sel{display:flex;flex-direction:column}.dtl{display:none}#tip{position:fixed;z-index:50;pointer-events:none;max-width:300px;padding:8px 10px;border-radius:8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.35);font-size:12px;line-height:1.5}#tip b{display:block;margin-bottom:2px}#tip[hidden]{display:none}.rtback{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:20px}.rtback[hidden]{display:none}.rtmodal{position:relative;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5);padding:16px 20px;max-width:820px;width:100%;max-height:85vh;overflow:auto}.rtx{position:absolute;top:10px;right:10px;cursor:pointer}.node{cursor:pointer}
 .mxwin{position:absolute;inset-block-start:6px;inset-inline-start:6px;z-index:5;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel);opacity:.96;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .mxwin h3{margin:0;font-size:12px}
 .mxwin .bar{margin-block-end:4px;display:flex;gap:8px;align-items:center;justify-content:space-between}
@@ -175,7 +175,6 @@ tr.used td{background:var(--warnbg);font-weight:600}
     <div class="tabs" id="tabs" role="tablist">
       <button class="sel" data-pane="pTopo">Topology</button>
       <button data-pane="pFlow">Flow analysis</button>
-      <button data-pane="pRoutes">Effective routes</button>
       <button data-pane="pDesign">Baseline design &amp; IP plan</button>
     </div>
     <div class="pane sel" id="pTopo" style="padding:8px 0 0">
@@ -215,12 +214,13 @@ tr.used td{background:var(--warnbg);font-weight:600}
         </div>
       </div>
     </div>
-    <div class="pane" id="pRoutes">
+    <div class="rtback" id="pRoutes" hidden><div class="rtmodal" role="dialog" aria-label="Effective routes">
+      <button class="rtx" id="rtClose" title="Close" aria-label="Close">✕</button>
       <h2>Effective routes <select id="selTable"></select></h2>
       <div class="note" id="rtTitle"></div>
       <div class="rt"><table><thead><tr><th>Source</th><th>State</th><th>Prefix</th><th>Next hop type</th><th>Next hop IP</th></tr></thead><tbody id="rtBody"></tbody></table></div>
       <p class="note">Highlighted rows are used by the selected flow. Azure picks the longest prefix match; for identical prefixes, User &gt; BGP (Virtual network gateway) &gt; System.</p>
-    </div>
+          </div></div>
     <div class="pane" id="pDesign">
     <div class="cols2"><div>
     <h2>Baseline design</h2>
@@ -632,7 +632,7 @@ function drawTopo(){
     n.addEventListener('mousemove',e=>{tip.style.left=Math.min(e.clientX+14,innerWidth-320)+'px';tip.style.top=(e.clientY+14)+'px';});
     n.addEventListener('mouseleave',()=>{tip.hidden=true;});
   });
-  document.querySelectorAll('#nodes .node').forEach(n=>n.addEventListener('click',()=>{const t=n.getAttribute('data-t');if(t){$('selTable').value=t;renderRoutes();}}));
+  document.querySelectorAll('#nodes .node').forEach(n=>n.addEventListener('click',()=>{const t=n.getAttribute('data-t');if(t){$('selTable').value=t;renderRoutes();$('pRoutes').hidden=false;$('tip').hidden=true;}}));
 }
 function fitText(t,max){if(!t)return;t.removeAttribute('textLength');t.removeAttribute('lengthAdjust');try{if(t.getComputedTextLength()>max){t.setAttribute('textLength',max);t.setAttribute('lengthAdjust','spacingAndGlyphs');}}catch(e){}}
 function refreshLabels(){
@@ -918,7 +918,9 @@ function init(){
   const setCfg=o=>{document.body.classList.toggle('cfgopen',o);$('btnCfg').setAttribute('aria-expanded',o);};
   $('btnCfg').addEventListener('click',()=>setCfg(!document.body.classList.contains('cfgopen')));
   $('btnCloseCfg').addEventListener('click',()=>setCfg(false));
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')setCfg(false);});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){setCfg(false);$('pRoutes').hidden=true;}});
+  $('rtClose').addEventListener('click',()=>$('pRoutes').hidden=true);
+  $('pRoutes').addEventListener('click',e=>{if(e.target===$('pRoutes'))$('pRoutes').hidden=true;});
   const themeBtn=$('btnTheme');
   const curTheme=()=>document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
   const paintTheme=()=>{const t=curTheme();themeBtn.textContent=t==='dark'?'☀':'🌙';themeBtn.title='Switch to '+(t==='dark'?'light':'dark')+' theme';themeBtn.setAttribute('aria-label',themeBtn.title);};
@@ -926,7 +928,7 @@ function init(){
   paintTheme();
   ['tabs'].forEach(id=>$(id).addEventListener('click',e=>{const b=e.target.closest('button[data-pane]');if(!b)return;
     [...$(id).children].forEach(x=>x.classList.toggle('sel',x===b));
-    ['pTopo','pFlow','pRoutes','pDesign'].forEach(p=>$(p).classList.toggle('sel',p===b.dataset.pane));}));
+    ['pTopo','pFlow','pDesign'].forEach(p=>$(p).classList.toggle('sel',p===b.dataset.pane));}));
     recompute(true);
 }
 init();
