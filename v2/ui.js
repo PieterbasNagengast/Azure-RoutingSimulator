@@ -55,6 +55,15 @@
     }
     return pts;
   }
+  function offsetPts(pts, d) {
+    const nrm = (a, b) => { const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l]; };
+    return pts.map((p, i) => {
+      const n1 = i > 0 ? nrm(pts[i - 1], p) : null, n2 = i < pts.length - 1 ? nrm(p, pts[i + 1]) : null;
+      let n = n1 || n2;
+      if (n1 && n2 && (Math.abs(n1[0] - n2[0]) > 1e-6 || Math.abs(n1[1] - n2[1]) > 1e-6)) n = [n1[0] + n2[0], n1[1] + n2[1]];
+      return [p[0] + n[0] * d, p[1] + n[1] * d];
+    });
+  }
   function rounded(pts, r) {
     if (pts.length < 2) return '';
     let d = 'M' + pts[0][0] + ' ' + pts[0][1];
@@ -147,7 +156,7 @@
   function drawPaths(a) {
     const g = $('#world');
     const add = (res, cls) => {
-      const pts = pathFor(res.nodes);
+      const pts = cls === 'ret' ? offsetPts(pathFor(res.nodes), 9) : pathFor(res.nodes);
       if (pts.length < 2) return;
       const d = rounded(pts, 14);
       el('path', { class: 'path ' + cls + (res.status === 'dropped' ? ' dropped' : ''), d }, null, g);
