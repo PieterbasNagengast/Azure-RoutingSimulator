@@ -196,8 +196,8 @@
       const pts = offsetPts(pathFor(res.nodes), 4);
       if (pts.length < 2) return;
       const d = rounded(pts, 10);
-      const pe = el('path', { class: 'path ' + cls + (res.status === 'dropped' ? ' dropped' : ''), d }); g.appendChild(pe);
-      const dot = el('circle', { class: 'dot', r: 5, fill: res.status === 'dropped' ? 'var(--err)' : cls === 'req' ? 'var(--acc)' : 'var(--ok)' }, null, g);
+      const pe = el('path', { class: 'path ' + cls + (res.status === 'dropped' ? ' dropped' : ''), d }); g.insertBefore(pe, g.querySelector('.nd'));
+      const dot = el('circle', { class: 'dot', r: 5, fill: res.status === 'dropped' ? 'var(--err)' : cls === 'req' ? 'var(--acc)' : 'var(--ok)' }); g.insertBefore(dot, g.querySelector('.nd'));
       const m = el('animateMotion', { dur: Math.max(3, pts.length * 0.8) + 's', repeatCount: 'indefinite', path: d }, null, dot);
       if (res.status === 'dropped') {
         const e = pts[pts.length - 1];
@@ -211,8 +211,8 @@
       const pts = offsetPts(pathFor(a.fwd.nodes), 0);
       if (pts.length > 1) {
         const d = rounded(pts, 10), dr = rounded(pts.slice().reverse(), 10), dur = Math.max(3, pts.length * 0.8) + 's';
-        g.appendChild(el('path', { class: 'path req', d }));
-        [[d, 'var(--acc)'], [dr, 'var(--ok)']].forEach(x => { const dot = el('circle', { class: 'dot', r: 5, fill: x[1] }, null, g); el('animateMotion', { dur, repeatCount: 'indefinite', path: x[0] }, null, dot); });
+        g.insertBefore(el('path', { class: 'path req', d }), g.querySelector('.nd'));
+        [[d, 'var(--acc)'], [dr, 'var(--ok)']].forEach(x => { const dot = el('circle', { class: 'dot', r: 5, fill: x[1] }); g.insertBefore(dot, g.querySelector('.nd')); el('animateMotion', { dur, repeatCount: 'indefinite', path: x[0] }, null, dot); });
       }
       return;
     }
