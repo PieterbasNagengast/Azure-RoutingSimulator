@@ -54,7 +54,7 @@
       if (last && PILL[n] && last[0] !== C[n][0] && p[0][0] !== C[n][0]) {
         const cx = C[n][0], dir = last[0] > cx ? 1 : -1, ix = cx + dir * 55, o = p[0], od = o[0] > cx ? 1 : -1, ox = cx + od * 55;
         raw.push([ix, last[1]]);
-        if (dir !== od) { const my = (last[1] + o[1]) / 2; raw.push([ix, my], [ox, my]); }
+        if (dir !== od) { const my = Math.max(last[1], o[1]); raw.push([ix, my], [ox, my]); }
         raw.push([ox, last[1] === o[1] ? last[1] : o[1]]);
       }
       p.forEach(pt => raw.push(pt));
