@@ -184,7 +184,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
       <table class="mx"><thead id="mxHead"></thead><tbody id="mxBody"></tbody></table>
       <p class="note">▶ Click any flow to animate it</p>
     </div>
-    <svg id="topo" viewBox="-70 18 1210 565" role="img" aria-label="Hub and spoke topology diagram">
+    <svg id="topo" viewBox="-130 18 1270 565" role="img" aria-label="Hub and spoke topology diagram">
       <defs>
         <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
@@ -540,7 +540,7 @@ const $=id=>document.getElementById(id);
 const NS='http://www.w3.org/2000/svg';
 function el(tag,attrs,parent,text){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(text!==undefined)e.textContent=text;if(parent)parent.appendChild(e);return e;}
 const SPY={1:250,2:450};
-const A={vnra:[635,353],onprem:[42,488],msee:[290,488],ergw:[635,488],fw:[635,222],internet:[635,78],hub:[635,150]};
+const A={vnra:[635,353],onprem:[-18,488],msee:[290,488],ergw:[635,488],fw:[635,222],internet:[635,78],hub:[635,150]};
 SPOKES.forEach(i=>A['spoke'+i]=[1030,SPY[i]]);
 const J=i=>[800,Math.max(232,Math.min(492,SPY[i]))];
 function drawTopo(){
@@ -566,8 +566,8 @@ function drawTopo(){
   el('text',{class:'xs dtl'},gv,'.128/26 · 172.16.0.132');
   // links
   SPOKES.forEach(i=>{el('path',{d:`M800,${SPY[i]} L930,${SPY[i]}`,class:'link peer'},L);el('text',{x:865,y:SPY[i]-6,'text-anchor':'middle',class:'xs'},L,'peering');});
-  el('path',{d:'M135,480 L267,480',class:'link erlink',id:'lnkP','stroke-width':2},L);
-  el('path',{d:'M135,498 L244,498',class:'link erlink',id:'lnkS','stroke-width':2},L);
+  el('path',{d:'M79,480 L267,480',class:'link erlink',id:'lnkP','stroke-width':2},L);
+  el('path',{d:'M79,498 L244,498',class:'link erlink',id:'lnkS','stroke-width':2},L);
 
 
   el('g',{id:'outg'},N.parentNode);
@@ -599,7 +599,7 @@ function drawTopo(){
   el('text',{x:360,y:445,'text-anchor':'middle',class:'lbl'},gm,'ER Circuit');
   el('text',{class:'xs dtl'},gm,'MSEE @ peering location');
   // onprem
-  const go=el('g',{class:'node',id:'n-onprem','data-t':'onprem',transform:'translate(-70,58)'},N);
+  const go=el('g',{class:'node',id:'n-onprem','data-t':'onprem',transform:'translate(-130,58)'},N);
   el('rect',{x:16,y:403,width:193,height:54,rx:14,class:'halo'},go);
   el('rect',{x:20,y:407,width:185,height:46,rx:12,fill:'var(--onp)',stroke:'var(--onpb)',class:'vbox'},go);
   el('text',{x:32,y:435,class:'lbl'},go,'🏢 On-prem Datacenter');
@@ -621,7 +621,7 @@ function drawTopo(){
   });
 
   const LB=el('g',{id:'lblLayer'},null);$('topo').insertBefore(LB,$('flows'));
-  [[200,470,'Private peering'],[175,518,'primary / secondary'],[415,528,'ER connection']].forEach(([x,y,t])=>el('text',{x,y,'text-anchor':'middle',class:'xs lbltop'},LB,t));
+  [[170,472,'Private peering'],[150,520,'primary / secondary'],[415,528,'ER connection']].forEach(([x,y,t])=>el('text',{x,y,'text-anchor':'middle',class:'xs'},LB,t));
   let tip=$('tip');if(!tip){tip=document.createElement('div');tip.id='tip';tip.hidden=true;document.body.appendChild(tip);}
   document.querySelectorAll('#nodes .node').forEach(n=>{
     n.addEventListener('mouseenter',()=>{
