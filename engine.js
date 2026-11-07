@@ -113,7 +113,7 @@
     (rt.routes || []).forEach(r => {
       const p = parseCidr(r.prefix);
       if (!p) return;
-      const base = { src: 'User', prefix: p.str, pri: 3 };
+      const base = { src: 'User', prefix: p.str, pri: 6 };
       if (r.nh === 'fw' || r.nh === 'vnra') { const a = scn.hub.appliances[r.nh]; out.push(Object.assign(base, { nh: 'VirtualAppliance', ip: a.ip, via: r.nh })); }
       else if (r.nh === 'gateway') out.push(Object.assign(base, { nh: 'VirtualNetworkGateway' }));
       else if (r.nh === 'internet') out.push(Object.assign(base, { nh: 'Internet' }));
@@ -146,9 +146,9 @@
       const s = scn.spokes[id], p = parseCidr(s.cidr);
       if (p && linked(s)) rs.push({ src: 'Default', prefix: p.str, nh: 'VNetPeering', to: id, pri: 4 });
     });
-    if (withBgp && rt.propagate) advert(scn).forEach(p => rs.push({ src: 'BGP', prefix: p, nh: 'VirtualNetworkGateway', pri: 2 }));
+    if (withBgp && rt.propagate) advert(scn).forEach(p => rs.push({ src: 'BGP', prefix: p, nh: 'VirtualNetworkGateway', pri: 5 }));
     let ur = userRoutes(scn, rt);
-    if (lockInternet) ur = [{ src: 'User', prefix: '0.0.0.0/0', nh: 'Internet', pri: 3, note: 'Required by Azure Firewall; cannot be changed' }].concat(ur.filter(r => r.prefix !== '0.0.0.0/0'));
+    if (lockInternet) ur = [{ src: 'User', prefix: '0.0.0.0/0', nh: 'Internet', pri: 6, note: 'Required by Azure Firewall; cannot be changed' }].concat(ur.filter(r => r.prefix !== '0.0.0.0/0'));
     return { title, routes: finalize(rs.concat(ur)) };
   }
   function buildTables(scn) {
@@ -158,7 +158,7 @@
       const rs = sysDefaults([s.cidr]);
       const h = parseCidr(scn.hub.cidr);
       if (h && linked(s)) rs.push({ src: 'Default', prefix: h.str, nh: 'VNetPeering', to: 'hub', pri: 4 });
-      if (usesGw(s) && s.rt.propagate) advert(scn).forEach(p => rs.push({ src: 'BGP', prefix: p, nh: 'VirtualNetworkGateway', pri: 2 }));
+      if (usesGw(s) && s.rt.propagate) advert(scn).forEach(p => rs.push({ src: 'BGP', prefix: p, nh: 'VirtualNetworkGateway', pri: 5 }));
       T[id] = { title: s.name + ' subnet', routes: finalize(rs.concat(userRoutes(scn, s.rt))) };
     });
     T.gw = hubTable(scn, Object.assign({}, scn.hub.gw.rt, { propagate: true }), 'GatewaySubnet', false);
@@ -343,7 +343,7 @@
     const seenBp = {};
     fwd.hops.forEach(h => {
       if (!h.route || h.route.src !== 'Default' || !(h.route.nh === 'VNetPeering' || h.route.nh === 'VnetLocal') || !T[h.table]) return;
-      const u = T[h.table].routes.find(x => x.state === 'Active' && x.src === 'User' && x.nh === 'VirtualAppliance' && maskLen(x.prefix) < maskLen(h.route.prefix) && contains(x.prefix, f.dstIp));
+      const u = T[h.table].routes.find(x => x.state === 'Active' && x.src === 'User' && x.nh === 'VirtualAppliance' && maskLen(x.prefix) > 0 && maskLen(x.prefix) < maskLen(h.route.prefix) && contains(x.prefix, f.dstIp));
       if (u && !seenBp[h.table]) { seenBp[h.table] = 1; I.push({ tag: 'PeerBypass', level: 'warn', title: 'UDR bypassed by a more specific route', text: 'In ' + nodeName(scn, h.node) + ' the system route ' + h.route.prefix + ' is more specific than the UDR ' + u.prefix + ' → ' + nodeName(scn, u.via) + ', so ' + f.dstIp + ' skips the appliance. Use a UDR with an equal or longer prefix, or disable peering route propagation on that route table.' }); }
     });
     if (own.kind === 'internet' && fwd.status === 'delivered' && scn.hub.appliances.fw.enabled && !fwd.nodes.includes('fw'))
@@ -376,18 +376,18 @@
 
   /* ---------- Presets ---------- */
   function rt(s, prefix, nh) { s.routes = s.routes.filter(r => r.prefix !== prefix); s.routes.push({ prefix, nh }); }
+  const via = (s, nh) => {
+    SPOKES.forEach(id => { RFC1918.forEach(p => rt(s.spokes[id].rt, p, nh)); rt(s.hub.gw.rt, parseCidr(s.spokes[id].cidr).str, nh); });
+  };
   const presets = [
-    { id: 'baseline', name: 'Baseline (default route to firewall)', desc: 'Spokes only have 0.0.0.0/0 → firewall. On-prem advertises RFC1918, so spoke ↔ spoke hairpins over ExpressRoute.', apply: s => s },
-    { id: 'fixhairpin', name: 'Fix hairpin: spoke summary → firewall', desc: 'A UDR for the summary range on both spokes sends spoke-to-spoke traffic through the firewall.', apply: s => { const sum = supernet([s.hub.cidr, s.spokes.spoke1.cidr, s.spokes.spoke2.cidr]); SPOKES.forEach(id => rt(s.spokes[id].rt, sum, 'fw')); return s; } },
-    { id: 'inspectonprem', name: 'Inspect spoke ↔ on-prem (symmetric)', desc: 'Spokes send on-prem networks to the firewall; the GatewaySubnet sends the spoke /24s to the firewall.', apply: s => { SPOKES.forEach(id => { connected(s).forEach(c => rt(s.spokes[id].rt, c, 'fw')); rt(s.hub.gw.rt, parseCidr(s.spokes[id].cidr).str, 'fw'); }); return s; } },
-    { id: 'asym', name: 'Asymmetric: only spoke → on-prem via firewall', desc: 'Spokes route on-prem via the firewall, but the return path skips it — the firewall drops the session.', apply: s => { SPOKES.forEach(id => connected(s).forEach(c => rt(s.spokes[id].rt, c, 'fw'))); return s; } },
-    { id: 'dpr', name: 'Disable peering routes + summary on GatewaySubnet', desc: 'Peering routes are disabled on the GatewaySubnet route table so a summarised UDR to the firewall wins for on-prem → spoke.', apply: s => { const sum = supernet([s.hub.cidr, s.spokes.spoke1.cidr, s.spokes.spoke2.cidr]); s.hub.gw.rt.disablePeering = true; rt(s.hub.gw.rt, sum, 'fw'); SPOKES.forEach(id => { rt(s.spokes[id].rt, sum, 'fw'); connected(s).forEach(c => rt(s.spokes[id].rt, c, 'fw')); }); return s; } },
-    { id: 'vnra', name: 'Spoke ↔ spoke via VNRA', desc: 'Deploys the Virtual Network Routing Appliance and sends private traffic through it; 0.0.0.0/0 stays on the firewall.', apply: s => { s.hub.appliances.vnra.enabled = true; const sum = supernet([s.hub.cidr, s.spokes.spoke1.cidr, s.spokes.spoke2.cidr]); SPOKES.forEach(id => { rt(s.spokes[id].rt, sum, 'vnra'); connected(s).forEach(c => rt(s.spokes[id].rt, c, 'vnra')); rt(s.hub.gw.rt, parseCidr(s.spokes[id].cidr).str, 'vnra'); }); return s; } },
-    { id: 'onlyconnected', name: 'On-prem advertises only its own range', desc: 'Only the on-prem network is advertised, so the spokes learn no route covering each other — no hairpin.', apply: s => { s.onprem.advertise = connected(s).join(', '); return s; } },
-    { id: 'noroute', name: 'No default route (Internet blocked)', desc: 'Without a 0.0.0.0/0 UDR and without NAT Gateway / public IP, default outbound access (retired) is not available.', apply: s => { SPOKES.forEach(id => { s.spokes[id].rt.routes = []; }); return s; } },
-    { id: 'natgw', name: 'Spokes with NAT Gateway (direct Internet)', desc: 'Spokes have an explicit outbound method and no default route, so Internet traffic leaves directly, uninspected.', apply: s => { SPOKES.forEach(id => { s.spokes[id].rt.routes = []; s.spokes[id].outbound = true; }); return s; } }
-  ];
-  function applyPreset(id) {
+    { id: 'fw-all', name: '✔ Private (incl. on-prem) and Public over Azure Firewall', desc: 'Spokes send RFC1918 and 0.0.0.0/0 to the firewall; the GatewaySubnet sends the spoke ranges to the firewall. Spoke ↔ spoke, spoke ↔ on-prem and Internet are all inspected, both directions.', apply: s => { via(s, 'fw'); return s; } },
+    { id: 'fw-public-gw-private', name: '✔ Public over Azure Firewall, private via gateway (no spoke-to-spoke)', desc: 'On-prem advertises only a small, non-overlapping range (192.168.10.0/24), so spokes reach on-prem directly through the ER gateway. Only 0.0.0.0/0 goes to the firewall. There is no spoke-to-spoke route; the only path between spokes is the default route through the firewall.', apply: s => { s.onprem.networks = '192.168.10.0/24'; s.onprem.advertise = '192.168.10.0/24'; return s; } },
+    { id: 'vnra-private', name: '✔ Public over Azure Firewall, private (incl. on-prem) over VNRA', desc: 'Spokes send RFC1918 to the VNRA and 0.0.0.0/0 to the firewall; the GatewaySubnet sends the spoke ranges to the VNRA. The VNRA forwards without SNAT, so both directions stay symmetric.', apply: s => { s.hub.appliances.vnra.enabled = true; via(s, 'vnra'); return s; } },
+    { id: 'vnra-all', name: '✔ Private (incl. on-prem) and Public over VNRA, VNRA default route to firewall', desc: 'Spokes send RFC1918 and 0.0.0.0/0 to the VNRA. The VNRA subnet has 0.0.0.0/0 → firewall, so Internet traffic is inspected and private traffic is only forwarded.', apply: s => { s.hub.appliances.vnra.enabled = true; via(s, 'vnra'); SPOKES.forEach(id => rt(s.spokes[id].rt, '0.0.0.0/0', 'vnra')); rt(s.hub.appliances.vnra.rt, '0.0.0.0/0', 'fw'); return s; } },
+    { id: 'bad-asym-fw', name: '✖ Asymmetric traffic over Azure Firewall (spoke ↔ spoke)', desc: 'Only spoke 1 sends the spoke range to the firewall. The reply from spoke 2 follows the BGP summary over ExpressRoute and skips the firewall, which sees half a session.', apply: s => { rt(s.spokes.spoke1.rt, supernet([s.hub.cidr, s.spokes.spoke1.cidr, s.spokes.spoke2.cidr]), 'fw'); return s; } },
+    { id: 'bad-hairpin', name: '✖ Hairpin over ER MSEE (on-prem advertises RFC1918)', desc: 'Spokes only have 0.0.0.0/0 → firewall. The RFC1918 BGP routes are more specific, so spoke ↔ spoke traffic leaves Azure, turns around on the MSEE and comes back.', apply: s => s },
+    { id: 'bad-asym-onprem', name: '✖ Asymmetric traffic to on-prem (one leg over Azure Firewall)', desc: 'Spokes send on-prem traffic to the firewall, but the GatewaySubnet delivers the return traffic straight over the peering, skipping the firewall.', apply: s => { SPOKES.forEach(id => connected(s).forEach(c => rt(s.spokes[id].rt, c, 'fw'))); return s; } }
+  ];  function applyPreset(id) {
     const p = presets.find(x => x.id === id) || presets[0];
     const s = p.apply(defaultScenario());
     s.name = p.name;

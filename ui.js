@@ -6,14 +6,14 @@
   const KEY = 'rs2.scenario';
 
   /* ---------- state ---------- */
-  let scn, presetId = 'baseline', sel = 'spoke1', T, A;
+  let scn, presetId = RS.presets[0].id, sel = 'spoke1', T, A;
 
   function load() {
     try {
       if (location.hash.indexOf('#s=') === 0) return RS.normalize(JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3))))));
     } catch (e) { /* fall through */ }
     try { const j = localStorage.getItem(KEY); if (j) { const o = JSON.parse(j); presetId = o.presetId || 'custom'; return RS.normalize(o.scn); } } catch (e) { /* ignore */ }
-    return RS.defaultScenario();
+    return RS.applyPreset(RS.presets[0].id);
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify({ presetId, scn })); } catch (e) { /* ignore */ } }
 
@@ -325,7 +325,7 @@
   function changed() { presetId = 'custom'; save(); render(); }
   function select(id) { sel = id; render(); }
 
-  const PF = { asym: { dst: 'onprem' }, inspectonprem: { dst: 'onprem' }, dpr: { src: 'onprem', dst: 'spoke1' }, vnra: { dst: 'onprem' }, noroute: { dst: 'internet' }, natgw: { dst: 'internet' } };
+  const PF = { 'fw-public-gw-private': { dst: 'onprem' }, 'bad-asym-onprem': { dst: 'onprem' } };
   function loadPreset(id) {
     scn = RS.applyPreset(id); presetId = id;
     const o = PF[id];
@@ -362,7 +362,7 @@
   $('#fDstIp').onchange = e => { scn.flow.dstIp = e.target.value.trim(); save(); render(); };
   $('#quick').onclick = e => { const b = e.target.closest('button'); if (b) { scn.flow.dstIp = b.dataset.ip; save(); render(); } };
   $('#preset').onchange = e => { if (e.target.value !== 'custom') loadPreset(e.target.value); };
-  $('#bReset').onclick = () => loadPreset('baseline');
+  $('#bReset').onclick = () => loadPreset(RS.presets[0].id);
   $('#bTheme').onclick = () => { document.body.classList.toggle('light'); localStorage.setItem('rs2.theme', document.body.classList.contains('light') ? 'light' : 'dark'); };
   $('#bTrace').onclick = () => { $('#trace').classList.toggle('col'); $('#bTrace').textContent = $('#trace').classList.contains('col') ? '▴' : '▾'; };
   $('#bShare').onclick = () => {
