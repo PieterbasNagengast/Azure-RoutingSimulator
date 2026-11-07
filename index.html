@@ -118,7 +118,7 @@ tr.used td{background:var(--warnbg);font-weight:600}
 .mx td.na{color:var(--muted)}
 .mx td.c:hover{outline:2px solid var(--fwd)}
 .mx td.selc{outline:2px solid var(--ink)}
-.topowrap{position:relative}#topo{max-width:1000px;margin:0 auto;display:block}.dtl{display:none}#tip{position:fixed;z-index:50;pointer-events:none;max-width:300px;padding:8px 10px;border-radius:8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.35);font-size:12px;line-height:1.5}#tip b{display:block;margin-bottom:2px}#tip[hidden]{display:none}
+.topowrap{position:relative;flex:1;min-height:0}#topo{max-width:none;width:100%;height:100%;max-height:none;margin:0;display:block}html,body{height:100%}body{display:flex;flex-direction:column;overflow:hidden}main{flex:1;min-height:0;display:flex;flex-direction:column}.stage{flex:1;min-height:0;display:flex;flex-direction:column;margin-block-end:0}.stage>.pane{overflow:auto;min-height:0}.stage>.pane.sel{flex:1}.stage>#pTopo.sel{display:flex;flex-direction:column}.dtl{display:none}#tip{position:fixed;z-index:50;pointer-events:none;max-width:300px;padding:8px 10px;border-radius:8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.35);font-size:12px;line-height:1.5}#tip b{display:block;margin-bottom:2px}#tip[hidden]{display:none}
 .mxwin{position:absolute;inset-block-start:6px;inset-inline-start:6px;z-index:5;border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:var(--panel);opacity:.96;font-size:11px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .mxwin h3{margin:0;font-size:12px}
 .mxwin .bar{margin-block-end:4px;display:flex;gap:8px;align-items:center;justify-content:space-between}
