@@ -84,7 +84,7 @@
     if (over && typeof over === 'object') Object.keys(over).forEach(k => { if (!(k in out)) out[k] = over[k]; });
     return out;
   }
-  const normalize = o => merge(defaultScenario(), o);
+  const normalize = o => { const s = merge(defaultScenario(), o); s.hub.gw.rt.propagate = true; s.hub.appliances.fw.rt.routes = s.hub.appliances.fw.rt.routes.filter(r => r.prefix !== '0.0.0.0/0'); return s; };
   const clone = o => JSON.parse(JSON.stringify(o));
 
   const SPOKES = ['spoke1', 'spoke2'];
@@ -140,14 +140,16 @@
       rs.forEach(r => { if (r.src === 'Default' && r.nh === 'None' && r.state === 'Active') { r.state = 'Invalid'; r.note = 'Replaced by the 0.0.0.0/0 user-defined route'; } });
     return rs.sort((a, b) => maskLen(b.prefix) - maskLen(a.prefix) || b.pri - a.pri);
   }
-  function hubTable(scn, rt, title, withBgp) {
+  function hubTable(scn, rt, title, withBgp, lockInternet) {
     const rs = sysDefaults([scn.hub.cidr]);
     if (!rt.disablePeering) SPOKES.forEach(id => {
       const s = scn.spokes[id], p = parseCidr(s.cidr);
       if (p && linked(s)) rs.push({ src: 'Default', prefix: p.str, nh: 'VNetPeering', to: id, pri: 4 });
     });
     if (withBgp && rt.propagate) advert(scn).forEach(p => rs.push({ src: 'BGP', prefix: p, nh: 'VirtualNetworkGateway', pri: 2 }));
-    return { title, routes: finalize(rs.concat(userRoutes(scn, rt))) };
+    let ur = userRoutes(scn, rt);
+    if (lockInternet) ur = [{ src: 'User', prefix: '0.0.0.0/0', nh: 'Internet', pri: 3, note: 'Required by Azure Firewall; cannot be changed' }].concat(ur.filter(r => r.prefix !== '0.0.0.0/0'));
+    return { title, routes: finalize(rs.concat(ur)) };
   }
   function buildTables(scn) {
     const T = {};
@@ -159,8 +161,8 @@
       if (usesGw(s) && s.rt.propagate) advert(scn).forEach(p => rs.push({ src: 'BGP', prefix: p, nh: 'VirtualNetworkGateway', pri: 2 }));
       T[id] = { title: s.name + ' subnet', routes: finalize(rs.concat(userRoutes(scn, s.rt))) };
     });
-    T.gw = hubTable(scn, scn.hub.gw.rt, 'GatewaySubnet', false);
-    APPS.forEach(id => { T[id] = hubTable(scn, scn.hub.appliances[id].rt, scn.hub.appliances[id].name + ' subnet', true); });
+    T.gw = hubTable(scn, Object.assign({}, scn.hub.gw.rt, { propagate: true }), 'GatewaySubnet', false);
+    APPS.forEach(id => { T[id] = hubTable(scn, scn.hub.appliances[id].rt, scn.hub.appliances[id].name + ' subnet', true, id === 'fw'); });
 
     const az = [];
     const hp = parseCidr(scn.hub.cidr);
