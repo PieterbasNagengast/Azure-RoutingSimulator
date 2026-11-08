@@ -246,7 +246,7 @@
   function renderTrace(a) {
     const f = scn.flow;
     const col = (title, res, cls) => '<div><h4>' + title + '</h4>' + (res ? res.hops.map((h, i) => hopHtml(h, cls + (res.status === 'dropped' && i === res.hops.length - 1 ? ' drop' : ''))).join('') + '<div class="note">' + (res.status === 'delivered' ? '✔ delivered' : '✖ dropped — ' + esc(res.reason)) + '</div>' : '<div class="note">Not evaluated because the request was dropped.</div>') + '</div>';
-    const iss = a.issues.length ? a.issues.map(i => '<div class="iss ' + i.level + '"><b>' + esc(i.tag + ' — ' + i.title) + '</b>' + esc(i.text) + '</div>').join('') : '<div class="iss ok"><b>No problems found</b>Request and reply are both delivered' + (a.inspected ? ' and the traffic is inspected by the firewall.' : '.') + '</div>';
+    const iss = a.issues.length ? a.issues.map(i => '<div class="iss ' + i.level + '"><b>' + esc(i.tag + ' — ' + i.title) + '</b>' + '<div>' + esc(i.text) + '</div>' + (i.fix ? '<div class="fix"><b>How to fix:</b> ' + esc(i.fix) + '</div>' : '') + '</div>').join('') : '<div class="iss ok"><b>No problems found</b>Request and reply are both delivered' + (a.inspected ? ' and the traffic is inspected by the firewall.' : '.') + '</div>';
     $('#traceBody').innerHTML = col('Request', a.fwd, '') + col('Reply', a.ret, 'ret') + '<div><h4>Findings</h4>' + iss + '</div>';
     $('#traceSum').textContent = f.srcIp + ' → ' + f.dstIp;
     const v = $('#verdict');

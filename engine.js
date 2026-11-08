@@ -323,31 +323,51 @@
       else if (own.kind === 'onprem') ret = walk(scn, T, 'onprem', f.dstIp, f.srcIp);
     }
     const I = [];
-    if (fwd.status === 'dropped') I.push({ tag: 'Dropped', level: 'error', title: 'Request dropped', text: fwd.reason });
-    else if (ret && ret.status === 'dropped') I.push({ tag: 'Dropped', level: 'error', title: 'Reply dropped', text: ret.reason });
-    if (own.kind === 'internet' && fwd.status === 'dropped' && /default outbound/.test(fwd.reason)) I.push({ tag: 'NoEgress', level: 'error', title: 'No Internet egress', text: 'Default outbound access is retired. Give the subnet an explicit outbound method (NAT Gateway, public IP, load balancer outbound rule) or a route to an appliance that provides it.' });
+    const fixFor = r => {
+      const m = [
+        [/Invalid destination/, 'Enter a valid IPv4 address as the destination.'],
+        [/loop/i, 'Two route tables point at each other. Remove or change one of the UDRs so the traffic has a single direction.'],
+        [/does not exist/, 'Enable the appliance in Config, or change the UDR next hop to the real private IP of a deployed appliance.'],
+        [/peering is not connected/, 'Re-enable the hub and spoke peering: allow access to the remote network on both sides.'],
+        [/forwarded traffic is not allowed/, 'Turn on "Allow forwarded traffic" on the spoke side of the peering so traffic not sourced from the hub is accepted.'],
+        [/explicit outbound|default outbound/, 'Add an explicit outbound method (NAT Gateway or public IP) to the spoke, or add a 0.0.0.0/0 UDR to the firewall or VNRA.'],
+        [/Private destination/, 'A private address cannot go to the Internet. Add a UDR for the destination range to the firewall/VNRA, or turn Propagate gateway routes on so the gateway route is learned.'],
+        [/Next hop None/, 'Remove the UDR with next hop None, or replace it with a route to the firewall or VNRA.'],
+        [/policy denies/, 'Allow this traffic in the firewall policy (Config, Azure Firewall, Allow traffic).'],
+        [/GatewaySubnet: peering routes disabled/, 'Add a UDR on the GatewaySubnet for the spoke range (next hop firewall/VNRA), or turn Disable peering route propagation off.'],
+        [/GatewaySubnet/, 'Add a UDR on the GatewaySubnet for the destination, or fix the peering so the spoke route is learned.'],
+        [/specific route|aggregate/, 'Azure must advertise the destination range to on-prem over BGP. Check that the hub gateway learns it (peering Use remote gateway / Allow gateway transit).'],
+        [/On-prem has no route|MSEE/, 'Make sure on-prem and Azure advertise the destination ranges over the ExpressRoute BGP session.'],
+        [/No route/, 'Add a route for the destination: a UDR (for example 0.0.0.0/0 to the firewall) or turn Propagate gateway routes on.'],
+        [/not in |No host/, 'Check the destination IP: it is not in the network the route points to.']
+      ];
+      const x = m.find(e => e[0].test(r)); return x ? x[1] : 'Review the route tables on the hops marked in the trace.';
+    };
+    if (fwd.status === 'dropped') I.push({ tag: 'Dropped', level: 'error', title: 'Request dropped', text: fwd.reason, fix: fixFor(fwd.reason) });
+    else if (ret && ret.status === 'dropped') I.push({ tag: 'Dropped', level: 'error', title: 'Reply dropped', text: 'The request arrived but the reply cannot get back: ' + ret.reason, fix: fixFor(ret.reason) });
+    if (own.kind === 'internet' && fwd.status === 'dropped' && /default outbound/.test(fwd.reason)) I.push({ tag: 'NoEgress', level: 'error', title: 'No Internet egress', text: 'Default outbound access is retired, so a subnet without an explicit outbound method has no Internet access.', fix: 'Add a NAT Gateway or public IP (Config, spoke, Explicit outbound), or send 0.0.0.0/0 to the firewall/VNRA with a UDR.' });
     const apps = n => APPS.filter(x => n.includes(x));
     if (ret && fwd.status === 'delivered' && ret.status === 'delivered' && own.kind !== 'internet') {
       const a = apps(fwd.nodes), b = apps(ret.nodes);
       a.concat(b).filter((x, i, arr) => arr.indexOf(x) === i && (a.includes(x) !== b.includes(x))).forEach(id => {
         const ap = scn.hub.appliances[id];
         I.push(id === 'fw'
-          ? { tag: 'Asymmetric', level: 'error', title: 'Asymmetric routing via ' + ap.name, text: 'Only one direction passes the stateful firewall, so it sees half a session and drops it. Make both directions use the same inspection point (UDRs on both the spokes and the GatewaySubnet).' }
-          : { tag: 'Asymmetric', level: 'warn', title: 'Asymmetric path via ' + ap.name, text: 'Request and reply use different paths. A pure forwarder tolerates this, an inspecting firewall would not.' });
+          ? { tag: 'Asymmetric', level: 'error', title: 'Asymmetric routing via ' + ap.name, text: 'Only one direction passes the stateful firewall, so it sees half a session and drops it.', fix: 'Make both directions use the same firewall: add UDRs on the spokes and on the GatewaySubnet for the other side, or disable Propagate gateway routes on the spoke route table.' }
+          : { tag: 'Asymmetric', level: 'warn', title: 'Asymmetric path via ' + ap.name, text: 'Request and reply use different paths. A pure forwarder tolerates this, an inspecting firewall would not.', fix: 'Route both directions through the same appliance with matching UDRs on the spokes and GatewaySubnet.' });
       });
     }
     const viaEr = fwd.nodes.includes('msee') || (ret && ret.nodes.includes('msee'));
     if (viaEr && so.kind !== 'onprem' && own.kind !== 'onprem' && fwd.status === 'delivered') {
-      I.push({ tag: 'Hairpin', level: 'warn', title: 'ExpressRoute hairpin', text: 'Traffic between two Azure VNets leaves Azure, turns around on the MSEE and comes back through the ER gateway. It adds latency, consumes circuit bandwidth and is not inspected. Cause: on-prem advertises a range covering the spokes, and there is no peering between the spokes. Fix: a UDR for the summary range on the spokes (to the firewall or VNRA), or stop advertising the spoke range from on-prem.' });
+      I.push({ tag: 'Hairpin', level: 'warn', title: 'ExpressRoute hairpin', text: 'Traffic between two Azure VNets leaves Azure, turns around on the MSEE and comes back through the ER gateway. It adds latency, consumes circuit bandwidth and is not inspected. Cause: on-prem advertises a range covering the spokes, and there is no peering between the spokes.', fix: 'Add a UDR for the summary range on the spokes (next hop firewall or VNRA), or stop advertising the spoke range from on-prem.' });
     }
     const seenBp = {};
     fwd.hops.forEach(h => {
       if (!h.route || h.route.src !== 'Default' || !(h.route.nh === 'VNetPeering' || h.route.nh === 'VnetLocal') || !T[h.table]) return;
       const u = T[h.table].routes.find(x => x.state === 'Active' && x.src === 'User' && x.nh === 'VirtualAppliance' && maskLen(x.prefix) > 0 && maskLen(x.prefix) < maskLen(h.route.prefix) && contains(x.prefix, f.dstIp));
-      if (u && !seenBp[h.table]) { seenBp[h.table] = 1; I.push({ tag: 'PeerBypass', level: 'warn', title: 'UDR bypassed by a more specific route', text: 'In ' + nodeName(scn, h.node) + ' the system route ' + h.route.prefix + ' is more specific than the UDR ' + u.prefix + ' → ' + nodeName(scn, u.via) + ', so ' + f.dstIp + ' skips the appliance. Use a UDR with an equal or longer prefix, or disable peering route propagation on that route table.' }); }
+      if (u && !seenBp[h.table]) { seenBp[h.table] = 1; I.push({ tag: 'PeerBypass', level: 'warn', title: 'UDR bypassed by a more specific route', text: 'In ' + nodeName(scn, h.node) + ' the system route ' + h.route.prefix + ' is more specific than the UDR ' + u.prefix + ' → ' + nodeName(scn, u.via) + ', so ' + f.dstIp + ' skips the appliance.', fix: 'Use a UDR with an equal or longer prefix, or disable peering route propagation on that route table.' }); }
     });
     if (own.kind === 'internet' && fwd.status === 'delivered' && scn.hub.appliances.fw.enabled && !fwd.nodes.includes('fw'))
-      I.push({ tag: 'Bypass', level: 'warn', title: 'Internet egress is not inspected', text: 'The path to the Internet does not pass the Azure Firewall.' });
+      I.push({ tag: 'Bypass', level: 'warn', title: 'Internet egress is not inspected', text: 'The path to the Internet does not pass the Azure Firewall.', fix: 'Add a 0.0.0.0/0 UDR to the firewall on the spoke, and remove NAT/public IP outbound if all egress must be inspected.' });
 
     const inspected = fwd.nodes.includes('fw');
     const level = I.some(i => i.level === 'error') ? 'error' : I.some(i => i.level === 'warn') ? 'warn' : 'ok';
