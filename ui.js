@@ -387,6 +387,7 @@
   document.addEventListener('click', e => { if (!e.target.closest('#pdesc')) $('#pdesc').hidden = true; });
   $('#bCfg').onclick = () => document.body.classList.toggle('cfg');
   $('#iClose').onclick = () => document.body.classList.remove('cfg');
+  $('#verdict').onclick = () => { const t = $('#trace'); if (t.classList.contains('col')) $('#bTrace').click(); t.scrollIntoView({ block: 'end' }); };
   $('#bTrace').onclick = () => { $('#trace').classList.toggle('col'); $('#bTrace').textContent = $('#trace').classList.contains('col') ? '▴' : '▾'; };
   $('#bShare').onclick = () => {
     const u = location.href.split('#')[0] + '#s=' + btoa(unescape(encodeURIComponent(JSON.stringify(scn))));

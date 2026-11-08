@@ -106,3 +106,5 @@ tr.used td{background:rgba(77,163,255,.18)}
 
 .iss .fix{margin-top:6px;padding:6px 8px;border-left:3px solid var(--acc);background:rgba(77,163,255,.1);border-radius:4px}
 .iss .fix b{display:inline;color:var(--acc)}
+
+#verdict{cursor:pointer}#verdict:hover{filter:brightness(1.2)}
