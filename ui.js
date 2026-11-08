@@ -318,7 +318,8 @@
   }
   function renderPresets() {
     const p = $('#preset'), cur = RS.presets.find(x => x.id === presetId);
-    p.innerHTML = RS.presets.map(x => '<option value="' + x.id + '">' + esc(x.name) + '</option>').join('') + (cur ? '' : '<option value="custom">Custom (edited)</option>');
+    const opt = x => '<option value="' + x.id + '">' + esc(x.name.replace(/^[✔✖]\s*/, '')) + '</option>';
+    p.innerHTML = '<optgroup label="✔ Correct configurations">' + RS.presets.filter(x => !x.id.startsWith('bad-')).map(opt).join('') + '</optgroup><optgroup label="✖ Common mistakes (wrong configurations)">' + RS.presets.filter(x => x.id.startsWith('bad-')).map(opt).join('') + '</optgroup>' + (cur ? '' : '<option value="custom">Custom (edited)</option>');
     p.value = cur ? presetId : 'custom';
     $('#pdesc').textContent = cur ? cur.desc : 'Your own scenario. Pick a preset to start over.';
   }
