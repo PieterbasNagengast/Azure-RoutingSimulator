@@ -398,6 +398,17 @@
   svg.addEventListener('pointerdown', e => { if (e.target.closest('.nd')) return; drag = { x: e.clientX, y: e.clientY, vx: vb.x, vy: vb.y }; svg.setPointerCapture(e.pointerId); svg.style.cursor = 'grabbing'; });
   svg.addEventListener('pointermove', e => { if (!drag) return; const r = svg.getBoundingClientRect(); vb.x = drag.vx - (e.clientX - drag.x) * vb.w / r.width; vb.y = drag.vy - (e.clientY - drag.y) * vb.h / r.height; applyView(); });
   svg.addEventListener('pointerup', () => { drag = null; svg.style.cursor = ''; });
+  let pinch = null;
+  const tDist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  svg.addEventListener('touchstart', e => { if (e.touches.length === 2) { drag = null; pinch = { d: tDist(e.touches), w: vb.w }; } }, { passive: true });
+  svg.addEventListener('touchmove', e => {
+    if (!pinch || e.touches.length !== 2) return;
+    const r = svg.getBoundingClientRect(), t = e.touches;
+    const px = ((t[0].clientX + t[1].clientX) / 2 - r.left) / r.width, py = ((t[0].clientY + t[1].clientY) / 2 - r.top) / r.height;
+    const nw = Math.min(2400, Math.max(300, pinch.w * pinch.d / tDist(t))), nh = nw * vb.h / vb.w;
+    vb = { x: vb.x + (vb.w - nw) * px, y: vb.y + (vb.h - nh) * py, w: nw, h: nh }; applyView();
+  }, { passive: true });
+  svg.addEventListener('touchend', () => { pinch = null; });
   $('#zoom').onclick = e => {
     const z = e.target.dataset.z; if (!z) return;
     if (z === 'reset') vb = { x: 0, y: 0, w: 1220, h: 680 };
