@@ -323,7 +323,7 @@
     $('#pdesc').textContent = cur ? cur.desc : 'Your own scenario. Pick a preset to start over.';
   }
   function changed() { presetId = 'custom'; save(); render(); }
-  function select(id) { sel = id; render(); }
+  function select(id) { sel = id; document.body.classList.add('cfg'); render(); }
 
   const PF = { 'fw-public-gw-private': { dst: 'onprem' }, 'bad-asym-onprem': { dst: 'onprem' } };
   function loadPreset(id) {
@@ -364,6 +364,8 @@
   $('#preset').onchange = e => { if (e.target.value !== 'custom') loadPreset(e.target.value); };
   $('#bReset').onclick = () => loadPreset(RS.presets[0].id);
   $('#bTheme').onclick = () => { document.body.classList.toggle('light'); localStorage.setItem('rs2.theme', document.body.classList.contains('light') ? 'light' : 'dark'); };
+  $('#bCfg').onclick = () => document.body.classList.toggle('cfg');
+  $('#iClose').onclick = () => document.body.classList.remove('cfg');
   $('#bTrace').onclick = () => { $('#trace').classList.toggle('col'); $('#bTrace').textContent = $('#trace').classList.contains('col') ? '▴' : '▾'; };
   $('#bShare').onclick = () => {
     const u = location.href.split('#')[0] + '#s=' + btoa(unescape(encodeURIComponent(JSON.stringify(scn))));

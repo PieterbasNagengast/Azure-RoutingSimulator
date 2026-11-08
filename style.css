@@ -22,7 +22,11 @@ main{flex:1;display:flex;min-height:0}
 #svg{width:100%;height:100%;cursor:grab;display:block}
 #zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:4px}
 #hint{position:absolute;left:12px;bottom:8px;color:var(--mut);font-size:11px;pointer-events:none}
-#insp{width:430px;overflow:auto;background:var(--panel);border-left:1px solid var(--line);padding:12px}
+main{position:relative;overflow:hidden}
+#insp{position:absolute;top:0;right:0;bottom:0;z-index:5;width:430px;max-width:100%;box-sizing:border-box;overflow:auto;background:var(--panel);border-left:1px solid var(--line);padding:12px;box-shadow:-6px 0 18px #0006;transform:translateX(105%);transition:transform .2s}
+body.cfg #insp{transform:none}
+#iClose{position:absolute;top:8px;right:10px;z-index:6;display:none}
+body.cfg #iClose{display:block}
 #insp h2{margin:0 0 2px;font-size:15px}
 #insp h3{margin:14px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
 .row{display:flex;align-items:center;gap:8px;margin:5px 0}
@@ -38,7 +42,7 @@ tr.inv td{color:var(--mut);text-decoration:line-through}
 tr.used td{background:rgba(77,163,255,.18)}
 .note{color:var(--mut);font-size:12px;margin:4px 0}
 .btnrow{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
-#trace{background:var(--panel);border-top:1px solid var(--line);max-height:38vh;display:flex;flex-direction:column}
+#trace{position:fixed;left:0;right:0;bottom:0;z-index:7;box-shadow:0 -6px 18px #0006;background:var(--panel);border-top:1px solid var(--line);max-height:38vh;display:flex;flex-direction:column}
 #traceHead{display:flex;align-items:center;gap:10px;padding:6px 14px;font-weight:600}
 #traceBody{overflow:auto;padding:0 14px 10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
 #trace.col #traceBody{display:none}
@@ -76,7 +80,7 @@ tr.used td{background:rgba(77,163,255,.18)}
   body{max-width:100vw}
   header>*,#flowbar>*{min-width:0;max-width:100%}
   #quick{flex-wrap:wrap;display:flex;gap:4px}
-  body{display:block}
+  body{display:block;height:auto}
   header,#flowbar{padding:6px 10px;gap:6px}
   header h1{font-size:14px;flex:1 1 100%}
   #preset{max-width:100%;flex:1 1 100%}
@@ -84,11 +88,11 @@ tr.used td{background:rgba(77,163,255,.18)}
   #flowbar label{flex:1 1 40%}
   #flowbar input,#flowbar select{width:100%;box-sizing:border-box}
   #flowbar .arrow{display:none}
-  main{display:block}
-  #stage{height:340px;border-bottom:1px solid var(--line)}
+  main{height:calc(100vh - 140px);min-height:360px}
+  #stage{height:100%}
   #svg{touch-action:none}
   #hint{font-size:10px}
-  #insp{width:auto;border-left:0;overflow:visible}
+  #insp{width:100%;border-left:0}
   #trace{max-height:none}
   #traceBody{grid-template-columns:1fr}
   button,select,input{min-height:34px}
