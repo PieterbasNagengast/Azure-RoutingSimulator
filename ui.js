@@ -10,7 +10,13 @@
 
   function load() {
     try {
-      if (location.hash.indexOf('#s=') === 0) return RS.normalize(JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3))))));
+      if (location.hash.indexOf('#s=') === 0) {
+        const s = RS.normalize(JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3))))));
+        const strip = o => JSON.stringify(Object.assign({}, o, { flow: null }));
+        const m = RS.presets.find(p => strip(RS.applyPreset(p.id)) === strip(s));
+        presetId = m ? m.id : 'custom';
+        return s;
+      }
     } catch (e) { /* fall through */ }
     try { const j = localStorage.getItem(KEY); if (j) { const o = JSON.parse(j); presetId = o.presetId || 'custom'; return RS.normalize(o.scn); } } catch (e) { /* ignore */ }
     return RS.applyPreset(RS.presets[0].id);
