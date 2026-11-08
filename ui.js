@@ -146,6 +146,18 @@
     el('path', { class: 'link', d: 'M635 150L635 72' }, null, g);
     el('text', { class: 'ltxt', x: 660, y: 100 }, 'Internet egress', g);
 
+    RS.SPOKES.forEach(id => {
+      const s = scn.spokes[id];
+      if (s.outbound || s.rt.routes.some(r => r.prefix === '0.0.0.0/0')) return;
+      const cy = C[id][1], x1 = id === 'spoke1' ? 1055 : 1180, ly = id === 'spoke1' ? 45 : 30;
+      const d = id === 'spoke1' ? 'M1055 ' + (cy - 55) + 'V' + ly + 'H672' : 'M1180 ' + cy + 'H1200V' + ly + 'H660';
+      el('path', { class: 'link', d, style: 'stroke:var(--err);stroke-dasharray:6 4' }, null, g);
+      const mx = id === 'spoke1' ? 860 : 1000, my = ly;
+      el('circle', { cx: mx, cy: my, r: 11, style: 'fill:var(--bg);stroke:var(--err);stroke-width:2' }, null, g);
+      el('path', { d: 'M' + (mx - 5) + ' ' + (my - 5) + 'l10 10m0-10l-10 10', style: 'stroke:var(--err);stroke-width:2.5;fill:none' }, null, g);
+      el('text', { class: 'ltxt', x: mx, y: id === 'spoke1' ? my + 26 : my - 16, style: 'fill:var(--err)' }, 'no default outbound · ' + s.name, g).setAttribute('text-anchor', 'middle');
+    });
+
     const node = (id, cls) => { const n = el('g', { class: 'nd ' + (cls || '') + (sel === id ? ' sel' : ''), 'data-n': id }, null, g); n.onclick = ev => { ev.stopPropagation(); select(id); }; return n; };
 
     const sub = (id, y, title, sublabel, glyph, on) => {
