@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Documentation – Azure Hub &amp; Spoke Routing Simulator</title>
+<style>
+:root{--bg:#0f1420;--panel:#171d2c;--panel2:#1d2538;--line:#2b3550;--fg:#e6ebf5;--mut:#8b97b3;--acc:#4da3ff;--ok:#3ecf8e;--warn:#f5b73b;--err:#ff6b6b}
+body.light{--bg:#f3f5fa;--panel:#fff;--panel2:#f0f3fa;--line:#cfd7e8;--fg:#1b2437;--mut:#5d6a88;--acc:#0b6bd3;--ok:#14935b;--warn:#b57a00;--err:#d12f2f}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 "Segoe UI",system-ui,sans-serif}
+a{color:var(--acc)}
+header{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:12px;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+header h1{margin:0;font-size:16px;flex:1}
+header h1 span{color:var(--acc)}
+.btn{display:inline-block;background:var(--acc);color:#fff;text-decoration:none;border:0;border-radius:6px;padding:7px 14px;font:inherit;font-weight:600;cursor:pointer}
+.btn.ghost{background:var(--panel2);color:var(--fg);border:1px solid var(--line)}
+.wrap{display:flex;max-width:1280px;margin:0 auto}
+nav{position:sticky;top:57px;align-self:flex-start;width:260px;flex:none;max-height:calc(100vh - 57px);overflow:auto;padding:18px 12px 30px 18px;font-size:13.5px}
+nav a{display:block;padding:3px 0;color:var(--mut);text-decoration:none}
+nav a:hover{color:var(--acc)}
+nav a.sub{padding-left:14px}
+nav b{display:block;margin:12px 0 2px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
+main{flex:1;min-width:0;padding:10px 28px 80px}
+h2{margin:44px 0 8px;padding-top:8px;font-size:24px;border-top:1px solid var(--line)}
+h2:first-child{border:0;margin-top:14px}
+h3{margin:28px 0 6px;font-size:18px}
+h4{margin:18px 0 4px;font-size:15px;color:var(--acc)}
+p,li{max-width:900px}
+code{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font:13px Consolas,monospace}
+figure{margin:14px 0 22px}
+figure img{display:block;width:100%;max-width:1000px;border:1px solid var(--line);border-radius:8px;cursor:zoom-in}
+figcaption{margin-top:6px;font-size:13px;color:var(--mut)}
+table{border-collapse:collapse;margin:10px 0 18px;font-size:14px;max-width:100%;display:block;overflow-x:auto}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+.tag{display:inline-block;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:700}
+.tag.ok{background:#14935b33;color:var(--ok)}.tag.bad{background:#d12f2f33;color:var(--err)}.tag.warn{background:#f5b73b33;color:var(--warn)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 18px 10px;margin:18px 0}
+.callout{border-left:4px solid var(--acc);background:var(--panel);padding:8px 14px;margin:14px 0;border-radius:0 8px 8px 0;max-width:900px}
+.callout.warn{border-color:var(--warn)}
+#lb{position:fixed;inset:0;background:#000d;display:none;align-items:center;justify-content:center;z-index:50;cursor:zoom-out}
+#lb img{max-width:96vw;max-height:94vh}
+@media(max-width:860px){nav{display:none}main{padding:6px 14px 60px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Azure Hub &amp; Spoke <span>Routing Simulator</span> · Documentation</h1>
+  <button class="btn ghost" id="bTheme" title="Toggle theme">◐</button>
+  <a class="btn" href="index.html">Open simulator →</a>
+</header>
+<div class="wrap">
+<nav>
+  <b>Getting started</b>
+  <a href="#what">What is this?</a>
+  <a href="#quickstart">Quick start</a>
+  <a href="#screen">The screen</a>
+  <b>Using it</b>
+  <a href="#topology">Topology and flows</a>
+  <a href="#flowbar">Flow bar</a>
+  <a href="#trace">Traffic trace</a>
+  <a href="#config">Configuration panel</a>
+  <a class="sub" href="#cfg-onprem">On-prem</a>
+  <a class="sub" href="#cfg-hub">Hub, gateway, appliances</a>
+  <a class="sub" href="#cfg-spoke">Spokes and peering</a>
+  <a class="sub" href="#cfg-rt">Route tables</a>
+  <a href="#toolbar">Toolbar, zoom, mobile</a>
+  <b>Routing model</b>
+  <a href="#model">How routes are chosen</a>
+  <a href="#locked">Rules Azure enforces</a>
+  <a href="#features">DPR and VNRA</a>
+  <a href="#findings">Findings and verdicts</a>
+  <b>Scenarios</b>
+  <a href="#presets">Preset overview</a>
+  <a class="sub" href="#p-fw-all">1 · Firewall for everything</a>
+  <a class="sub" href="#p-fw-public">2 · Firewall public, gateway private</a>
+  <a class="sub" href="#p-vnra-private">3 · Firewall public, VNRA private</a>
+  <a class="sub" href="#p-vnra-all">4 · VNRA for everything</a>
+  <a class="sub" href="#p-bad-asym-fw">5 · Asymmetric over firewall</a>
+  <a class="sub" href="#p-bad-hairpin">6 · ER MSEE hairpin</a>
+  <a class="sub" href="#p-bad-asym-onprem">7 · Asymmetric to on-prem</a>
+  <b>Reference</b>
+  <a href="#sharing">Sharing and saving</a>
+  <a href="#limits">Limitations</a>
+  <a href="#dev">Run, test, host</a>
+  <a href="#glossary">Glossary</a>
+</nav>
+<main>
+
+<h2 id="what">What is this?</h2>
+<p>The Azure Hub &amp; Spoke Routing Simulator is a free, in-browser tool that shows how packets travel through a typical Azure hub-and-spoke network that is connected to an on-premises datacenter over ExpressRoute. You define the IP ranges, peerings, route tables (UDRs), BGP advertisements and inspection appliances. The simulator then calculates the <em>effective routes</em> of every subnet and traces a packet hop by hop, forward <em>and</em> back.</p>
+<p>It is built to answer questions such as:</p>
+<ul>
+  <li>Does traffic between two spokes really pass through the firewall, or does it bypass it?</li>
+  <li>Why is my traffic hairpinning over the ExpressRoute circuit?</li>
+  <li>Is the return path the same as the request path (symmetric), so a stateful firewall sees the whole session?</li>
+  <li>What do <em>Propagate gateway routes</em>, <em>Disable peering route propagation</em> and the new routing appliance (VNRA) change?</li>
+</ul>
+<p>Everything runs locally in your browser. There is no backend and nothing is uploaded. It is a teaching and design aid: it models the routing decision, not every Azure feature (see <a href="#limits">Limitations</a>).</p>
+
+<h2 id="quickstart">Quick start</h2>
+<ol>
+  <li>Open the simulator and pick a scenario in the dropdown at the top. Start with <strong>Private (incl. on-prem) and Public over Azure Firewall</strong>.</li>
+  <li>Choose <em>From</em> (a spoke or on-prem), enter a source IP and a destination IP, or press one of the <code>→</code> quick buttons.</li>
+  <li>Watch the blue line (request) and the green dashed line (reply) in the topology. The badge at the top right gives the verdict.</li>
+  <li>Open <strong>Traffic trace</strong> at the bottom to read every routing decision in plain language.</li>
+  <li>Click a component (or press <strong>⚙ Config</strong>) to change its settings and see the result live.</li>
+  <li>Switch to one of the <strong>✖ Common mistakes</strong> to see what typical misconfigurations look like.</li>
+</ol>
+<figure><img src="docs/img/overview.png" alt="The simulator showing a spoke to spoke flow through the Azure Firewall"><figcaption>The simulator on first load: the topology fills the window; trace and configuration are collapsed.</figcaption></figure>
+
+<h2 id="screen">The screen</h2>
+<table>
+<tr><th>Area</th><th>Purpose</th></tr>
+<tr><td><strong>Header</strong></td><td>Title, scenario dropdown with the ⓘ info button, a possible warnings chip, the blue <strong>Docs</strong> button, <strong>⚙ Config</strong>, <strong>Share</strong>, <strong>Reset</strong> and the theme toggle.</td></tr>
+<tr><td><strong>Flow bar</strong></td><td>Defines which packet is simulated (source, source IP, destination IP) and shows the verdict.</td></tr>
+<tr><td><strong>Topology</strong></td><td>The full-width diagram: Internet, hub VNet with firewall, VNRA and ER gateway, two spokes, the ExpressRoute circuit and on-prem.</td></tr>
+<tr><td><strong>Traffic trace</strong></td><td>A flyout along the bottom with the hop-by-hop explanation. Collapsed by default.</td></tr>
+<tr><td><strong>Configuration panel</strong></td><td>A flyout on the right with settings and effective routes of the selected component. Collapsed by default.</td></tr>
+</table>
+<figure><img src="docs/img/info.png" alt="Scenario description popover"><figcaption>The ⓘ button next to the scenario dropdown opens the description of the selected scenario.</figcaption></figure>
+
+<h2 id="topology">Topology and flows</h2>
+<h3>Components</h3>
+<ul>
+  <li><strong>On-prem datacenter</strong> with connected networks (default <code>192.168.0.0/16</code>) and a host (<code>192.168.10.10</code>).</li>
+  <li><strong>ExpressRoute circuit (MSEE)</strong>, the Microsoft edge routers that exchange routes between on-prem and Azure.</li>
+  <li><strong>vnet-hub</strong> (<code>172.16.0.0/24</code>) with the <strong>ER Gateway</strong> (GatewaySubnet), the <strong>Azure Firewall</strong> and the optional <strong>VNRA</strong> (Virtual Network Routing Appliance). Every one has its own subnet and, for appliances, its own route table.</li>
+  <li><strong>vnet-spoke-01</strong> (<code>172.16.1.0/24</code>) and <strong>vnet-spoke-02</strong> (<code>172.16.2.0/24</code>), each peered with the hub and each with a VM.</li>
+  <li><strong>Internet</strong>, reached through the firewall (SNAT), a NAT gateway / public IP on a spoke (explicit outbound), or not at all.</li>
+</ul>
+<h3>Reading the lines</h3>
+<ul>
+  <li>A <strong>solid blue</strong> line is the request, a <strong>dashed green</strong> line is the reply.</li>
+  <li>When the reply retraces exactly the same path, it is drawn as <strong>one bidirectional line</strong> with two dots. When the paths differ (asymmetric) you see two separate lines.</li>
+  <li>Hub components behave like a box with an <strong>in</strong> side and an <strong>out</strong> side: a flow enters on the left lanes, and leaves on the right lanes, so lines never cross. Flows are drawn <em>behind</em> the components so they appear to enter and leave each box.</li>
+  <li>Traffic to and from on-prem always uses the bottom lane of the ER gateway.</li>
+  <li>A dotted grey line is an idle link. A red ✖ marks the spot where a packet is dropped.</li>
+</ul>
+<figure><img src="docs/img/fw-all-b.png" alt="Spoke 1 to on-prem through firewall and ER gateway"><figcaption>Spoke 1 → on-prem: spoke → firewall → ER gateway → MSEE → on-prem. One bidirectional line, because the reply uses the same path.</figcaption></figure>
+
+<h2 id="flowbar">Flow bar</h2>
+<ul>
+  <li><strong>From</strong>: the origin of the packet. Spoke 1, spoke 2 or on-prem.</li>
+  <li><strong>Source IP</strong> / <strong>Destination IP</strong>: any IPv4 address. A red outline means the address is not valid. The destination drives which component is the target: a spoke VM, an on-prem host or any other address, which is treated as the Internet.</li>
+  <li><strong>→ quick buttons</strong>: set the destination to spoke 1, spoke 2, on-prem or the Internet in one click.</li>
+  <li><strong>Verdict badge</strong>:
+    <table>
+      <tr><td><span class="tag ok">✔ Delivered · inspected</span></td><td>Request and reply were both delivered and the traffic passed an inspecting appliance.</td></tr>
+      <tr><td><span class="tag ok">✔ Delivered</span></td><td>Delivered both ways, without inspection (not necessarily a problem, for example on-prem to a spoke without a firewall requirement).</td></tr>
+      <tr><td><span class="tag warn">⚠ Delivered, with warnings</span></td><td>Works, but something is suspicious (hairpin, bypass, asymmetry through a pure forwarder).</td></tr>
+      <tr><td><span class="tag bad">✖ Delivered one way only</span></td><td>An asymmetric path through a stateful firewall: in practice the session fails.</td></tr>
+      <tr><td><span class="tag bad">✖ Dropped</span></td><td>No route, peering setting blocks it, policy deny or no Internet egress.</td></tr>
+    </table>
+  </li>
+</ul>
+
+<h2 id="trace">Traffic trace</h2>
+<p>Press the <strong>Traffic trace</strong> bar at the bottom to slide the panel up. It has three columns:</p>
+<ul>
+  <li><strong>Request</strong>: every hop with the route that was chosen (source, prefix, next hop) and a sentence that explains the decision.</li>
+  <li><strong>Reply</strong>: the same for the way back. If it follows the request path in reverse, it says so.</li>
+  <li><strong>Findings</strong>: warnings and errors such as hairpin, asymmetry, bypassed UDRs, or <em>No problems found</em>.</li>
+</ul>
+<figure><img src="docs/img/bad-hairpin-a-trace.png" alt="Trace showing an ExpressRoute hairpin"><figcaption>The trace of the hairpin scenario: the BGP route <code>172.16.0.0/12</code> sends spoke traffic to the MSEE, which sends it straight back.</figcaption></figure>
+
+<h2 id="config">Configuration panel</h2>
+<p>Click any component, or press <strong>⚙ Config</strong>, to open the right-hand panel. Changes apply immediately. Once you edit anything, the scenario name changes to <em>Custom (edited)</em>. A ✕ closes the panel. At the bottom of each panel you find the <strong>Effective routes</strong> of that component: the rows used by the current flow are highlighted and overridden routes are struck through.</p>
+<figure><img src="docs/img/config-spoke.png" alt="Configuration panel of a spoke"><figcaption>Spoke configuration: address space, VM, explicit outbound, peering settings and UDRs.</figcaption></figure>
+
+<h3 id="cfg-onprem">On-prem datacenter</h3>
+<ul>
+  <li><strong>Name</strong>, <strong>Host IP</strong>.</li>
+  <li><strong>Connected networks</strong>: the real networks behind the router, comma separated CIDRs.</li>
+  <li><strong>Advertised prefixes</strong>: what on-prem advertises to Azure over BGP. Anything advertised that is not a connected network is treated as an aggregate that points to Null0 on-prem. Shortcut buttons: <em>RFC1918</em>, <em>Only connected networks</em>, <em>+ 0.0.0.0/0</em>.</li>
+</ul>
+<figure><img src="docs/img/config-onprem.png" alt="On-prem configuration"></figure>
+
+<h3 id="cfg-hub">Hub, ER gateway, firewall, VNRA, circuit</h3>
+<ul>
+  <li><strong>vnet-hub</strong>: name and address space.</li>
+  <li><strong>ER Gateway</strong>: subnet CIDR and the GatewaySubnet route table. <em>Propagate gateway routes</em> is locked on (see <a href="#locked">Rules Azure enforces</a>).</li>
+  <li><strong>Azure Firewall</strong> and <strong>VNRA</strong>:
+    <ul>
+      <li><strong>Deployed</strong>: the VNRA is off by default. Click the dashed box in the topology to enable it.</li>
+      <li><strong>Subnet CIDR</strong> and <strong>Private IP</strong>: must be inside the hub address space and not overlap other subnets.</li>
+      <li><strong>SNAT to the Internet</strong>: whether the appliance translates to its public IP when it sends traffic out.</li>
+      <li><strong>Policy allows the flow</strong>: turn it off to see a policy deny at the appliance.</li>
+      <li>Route table with <em>Propagate gateway routes</em>, <em>Disable peering route propagation</em> and UDRs.</li>
+    </ul>
+  </li>
+  <li><strong>ExpressRoute circuit (MSEE)</strong>: explanation only. It holds the routes of both sides and sends each packet to the side with the longest matching prefix. Azure wins a tie.</li>
+</ul>
+<figure><img src="docs/img/config-gw.png" alt="ER gateway configuration"><figcaption>ER gateway: the locked propagation switch and the UDRs for the spoke ranges.</figcaption></figure>
+<figure><img src="docs/img/config-fw.png" alt="Azure Firewall configuration"><figcaption>Azure Firewall: the locked <code>0.0.0.0/0 → Internet</code> route, the DPR switch and its effective routes.</figcaption></figure>
+
+<h3 id="cfg-spoke">Spokes and peering</h3>
+<ul>
+  <li><strong>Name</strong>, <strong>Address space</strong>, <strong>VM IP</strong>.</li>
+  <li><strong>Explicit outbound (NAT Gateway / public IP)</strong>: default outbound access to the Internet has been retired in Azure. Without an explicit outbound method, the system route <code>0.0.0.0/0 → Internet</code> exists but traffic is dropped.</li>
+  <li><strong>Peering spoke → hub</strong>: <em>Allow access to remote network</em>, <em>Allow forwarded traffic</em>, <em>Use remote gateway</em> (learn on-prem routes through the hub's ER gateway).</li>
+  <li><strong>Peering hub → spoke</strong>: <em>Allow access to remote network</em>, <em>Allow forwarded traffic</em> (needed so the hub can forward traffic into the spoke), <em>Allow gateway transit</em>.</li>
+  <li>The spoke route table: <em>Propagate gateway routes</em> and UDRs.</li>
+</ul>
+
+<h3 id="cfg-rt">Route tables (UDRs)</h3>
+<ul>
+  <li><strong>Propagate gateway routes</strong>: BGP routes learned by the ER gateway appear in the subnet's route table. Turn it off on a spoke so that a single default route can take full control.</li>
+  <li><strong>Disable peering route propagation</strong> <span class="tag warn">preview</span>: removes the automatic peering routes from the subnet so UDRs can steer the peered ranges.</li>
+  <li><strong>+ Add route</strong>: prefix (autocomplete suggests <code>0.0.0.0/0</code>, RFC1918 ranges and your hub+spokes summary) and next hop: <em>Azure Firewall</em>, <em>Routing appliance (VNRA)</em>, <em>Virtual network gateway</em>, <em>Internet</em>, <em>None (drop)</em>, <em>Virtual network</em>.</li>
+  <li>A red outline means an invalid prefix. Remove a route with ✕.</li>
+</ul>
+
+<h2 id="toolbar">Toolbar, zoom and mobile</h2>
+<table>
+<tr><th>Control</th><th>Function</th></tr>
+<tr><td><strong>Docs</strong> (blue)</td><td>Opens this documentation.</td></tr>
+<tr><td><strong>⚙ Config</strong></td><td>Opens or closes the configuration flyout.</td></tr>
+<tr><td><strong>Share</strong></td><td>Copies a link that contains the whole scenario (ranges, routes, flow).</td></tr>
+<tr><td><strong>Reset</strong></td><td>Returns to the first scenario and clears your changes.</td></tr>
+<tr><td><strong>◐</strong></td><td>Dark / light theme (remembered).</td></tr>
+<tr><td><strong>+ − ⟲</strong></td><td>Zoom in, out and reset. Also: scroll wheel to zoom, drag to pan.</td></tr>
+<tr><td><strong>ⓘ</strong></td><td>Description of the selected scenario.</td></tr>
+<tr><td><strong>⚠ n issues</strong></td><td>Appears when the configuration is inconsistent (overlapping address spaces, an invalid CIDR, a subnet outside the hub range...). Click it for the list.</td></tr>
+</table>
+<p><strong>On a phone</strong> the header and flow bar wrap, the topology takes the whole screen, and the panels become full-width flyouts. Pan with one finger and zoom with a pinch.</p>
+
+<h2 id="model">How routes are chosen</h2>
+<p>For every subnet the simulator builds the same effective route table Azure would show, then applies the Azure rules in order:</p>
+<ol>
+  <li><strong>Longest prefix match</strong> wins.</li>
+  <li>For the same prefix: <strong>User (UDR)</strong> beats <strong>BGP</strong>, which beats <strong>Default (system)</strong>.</li>
+  <li>A user route for <code>0.0.0.0/0</code> invalidates the default system route to the Internet, and the system <em>None</em> routes for private ranges.</li>
+  <li>The route sources are: <strong>Default</strong> (local VNet, peering, Internet, None for RFC1918), <strong>BGP</strong> (on-prem routes learned over ExpressRoute and, in the opposite direction, Azure routes advertised to on-prem) and <strong>User</strong>.</li>
+  <li>Peering needs the right permissions: <em>access</em>, <em>forwarded traffic</em> and <em>gateway transit / remote gateway</em> decide whether a packet can enter, transit or leave a VNet.</li>
+</ol>
+<p>The <strong>MSEE</strong> is modelled as a router that has both the Azure prefixes and the on-prem prefixes, and sends a packet to the side with the longest matching prefix. If on-prem advertises <code>172.16.0.0/12</code> and Azure advertises <code>172.16.2.0/24</code>, the Azure /24 wins for traffic that arrives from Azure. But if the spoke has a route for <code>172.16.0.0/12</code> through the gateway and no spoke-specific route, the packet leaves to on-prem and comes straight back: a <strong>hairpin</strong>.</p>
+
+<h2 id="locked">Rules Azure enforces</h2>
+<div class="callout"><strong>GatewaySubnet</strong>: <em>Propagate gateway routes</em> cannot be disabled on the route table of the GatewaySubnet. The simulator keeps it on and shows a note.</div>
+<div class="callout"><strong>Azure Firewall subnet</strong>: it requires a default route <code>0.0.0.0/0 → Internet</code> that cannot be changed. The simulator shows it as a locked row and strips any other <code>0.0.0.0/0</code> you try to add.</div>
+<div class="callout warn"><strong>Default outbound access is retired</strong>: a spoke needs an explicit outbound method (NAT Gateway, public IP, or a route to a firewall / appliance) to reach the Internet.</div>
+
+<h2 id="features">Disable peering route propagation and VNRA</h2>
+<h3>Disable peering route propagation (preview)</h3>
+<p>Normally a VNet peering adds system routes for the peered address space. These always exist and, being more specific than a summary UDR, can <em>bypass</em> your appliance. With the preview setting <strong>Disable peering route propagation</strong> on a route table, those peering routes are removed for that subnet so a UDR (for example <code>0.0.0.0/0 → firewall</code>) takes over. In the simulator the finding <em>UDR bypassed by a more specific route</em> tells you when you need it.</p>
+<h3>Virtual Network Routing Appliance (VNRA)</h3>
+<p>The VNRA (preview) is a pure routing/forwarding appliance in the hub. It does not SNAT and does not track sessions, so it tolerates asymmetry, but it provides no inspection either. Enable it in the topology (the dashed box) or its configuration panel. Use it for private traffic and chain it to the firewall for Internet traffic (scenarios 3 and 4).</p>
+<h2 id="findings">Findings and verdicts</h2>
+<table>
+<tr><th>Finding</th><th>Meaning</th><th>Typical fix</th></tr>
+<tr><td><span class="tag bad">Asymmetric</span> (error)</td><td>Only one direction passes a stateful firewall. It sees half a session and drops it.</td><td>Make both directions use the same inspection point: a UDR on the spoke <em>and</em> on the GatewaySubnet (or disable propagation and use a default route).</td></tr>
+<tr><td><span class="tag warn">Asymmetric</span> (warning)</td><td>Request and reply use different paths, but the appliance is a pure forwarder (VNRA).</td><td>Usually acceptable; make the paths equal if you want to inspect later.</td></tr>
+<tr><td><span class="tag warn">Hairpin</span></td><td>Spoke to spoke traffic leaves Azure, turns around on the MSEE and comes back through the ER gateway.</td><td>Add UDRs for the summary range to the firewall, or stop advertising the spoke range from on-prem.</td></tr>
+<tr><td><span class="tag warn">PeerBypass</span></td><td>A system peering route is more specific than your UDR.</td><td>Use specific UDRs, or <em>Disable peering route propagation</em>.</td></tr>
+<tr><td><span class="tag warn">Bypass</span></td><td>Internet egress does not pass the Azure Firewall.</td><td>Add <code>0.0.0.0/0 → firewall</code> to the spoke.</td></tr>
+<tr><td><span class="tag bad">NoEgress</span></td><td>No explicit outbound method.</td><td>Add a NAT Gateway / public IP or a default route to an appliance.</td></tr>
+<tr><td><span class="tag bad">Dropped</span></td><td>No route, blocked peering permission, policy deny or <em>None</em> next hop.</td><td>Read the trace: it names the hop and the reason.</td></tr>
+</table>
+
+<h2 id="presets">Preset overview</h2>
+<p>The dropdown is grouped in <strong>✔ Correct configurations</strong> (patterns you can use) and <strong>✖ Common mistakes</strong> (wrong configurations that illustrate typical problems). Each preset is a full scenario that you can inspect and edit. All presets share the same base addresses:</p>
+<table>
+<tr><th>Item</th><th>Value</th></tr>
+<tr><td>vnet-hub</td><td><code>172.16.0.0/24</code>: GatewaySubnet <code>172.16.0.0/26</code>, Azure Firewall <code>172.16.0.64/26</code> (IP <code>.68</code>), VNRA <code>172.16.0.128/26</code> (IP <code>.132</code>, disabled by default)</td></tr>
+<tr><td>vnet-spoke-01 / 02</td><td><code>172.16.1.0/24</code>, VM <code>172.16.1.10</code> / <code>172.16.2.0/24</code>, VM <code>172.16.2.10</code></td></tr>
+<tr><td>On-prem</td><td>Connected <code>192.168.0.0/16</code>, advertises RFC1918 (<code>10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16</code>), host <code>192.168.10.10</code></td></tr>
+<tr><td>Internet</td><td><code>20.50.60.70</code></td></tr>
+</table>
+<table>
+<tr><th>#</th><th>Scenario</th><th>Result</th></tr>
+<tr><td>1</td><td>Private (incl. on-prem) and Public over Azure Firewall</td><td><span class="tag ok">✔ correct</span></td></tr>
+<tr><td>2</td><td>Public over Azure Firewall, private via gateway (no spoke-to-spoke)</td><td><span class="tag ok">✔ correct</span></td></tr>
+<tr><td>3</td><td>Public over Azure Firewall, private (incl. on-prem) over VNRA</td><td><span class="tag ok">✔ correct</span></td></tr>
+<tr><td>4</td><td>Private (incl. on-prem) and Public over VNRA, VNRA default route to firewall</td><td><span class="tag ok">✔ correct</span></td></tr>
+<tr><td>5</td><td>Asymmetric traffic over Azure Firewall (spoke ↔ spoke)</td><td><span class="tag bad">✖ wrong</span></td></tr>
+<tr><td>6</td><td>Hairpin over ER MSEE (on-prem advertises RFC1918)</td><td><span class="tag bad">✖ wrong</span></td></tr>
+<tr><td>7</td><td>Asymmetric traffic to on-prem (one leg over Azure Firewall)</td><td><span class="tag bad">✖ wrong</span></td></tr>
+</table>
+<div class="callout">Tip: for every scenario, try the three flows <strong>spoke 1 → spoke 2</strong>, <strong>spoke 1 → on-prem</strong> and <strong>spoke 2 → Internet</strong>, and also the reverse <strong>on-prem → spoke</strong>, to see the whole picture.</div>
+
+<div class="card" id="p-fw-all">
+<h3>1 · ✔ Private (incl. on-prem) and Public over Azure Firewall <small>(default)</small></h3>
+<p><strong>Goal:</strong> inspect <em>everything</em> with the Azure Firewall: spoke ↔ spoke, spoke ↔ on-prem and Internet.</p>
+<h4>Configuration</h4>
+<ul>
+  <li>Spokes: <em>Propagate gateway routes</em> <strong>disabled</strong> and a single UDR <code>0.0.0.0/0 → Azure Firewall</code>. Without propagation the BGP routes (on-prem and the RFC1918 summary) do not enter the spoke, so the default route is all that is needed. Nothing more specific than <code>0.0.0.0/0</code> competes except the VNet and peering routes.</li>
+  <li>GatewaySubnet: UDRs for each spoke range (<code>172.16.1.0/24</code>, <code>172.16.2.0/24</code>) → Azure Firewall, so returning on-prem traffic enters the firewall too. The gateway's own propagation cannot be disabled.</li>
+  <li>Firewall: default Azure Firewall subnet route table with the locked <code>0.0.0.0/0 → Internet</code>. BGP routes are propagated so it knows the way to on-prem through the gateway.</li>
+</ul>
+<h4>Traffic</h4>
+<table>
+<tr><th>Flow</th><th>Request</th><th>Reply</th></tr>
+<tr><td>Spoke 1 → spoke 2</td><td>spoke 1 → firewall → spoke 2</td><td>spoke 2 → firewall → spoke 1</td></tr>
+<tr><td>Spoke 1 → on-prem</td><td>spoke 1 → firewall → ER gateway → MSEE → on-prem</td><td>on-prem → MSEE → ER gateway → firewall → spoke 1</td></tr>
+<tr><td>Spoke 2 → Internet</td><td>spoke 2 → firewall (SNAT) → Internet</td><td>Internet → firewall → spoke 2</td></tr>
+</table>
+<p><strong>Verdict:</strong> <span class="tag ok">✔ Delivered · inspected</span>, no findings. All paths are symmetric.</p>
+<figure><img src="docs/img/fw-all-a.png" alt="Spoke to spoke over the firewall"><figcaption>Spoke 1 → spoke 2 through the firewall.</figcaption></figure>
+<figure><img src="docs/img/fw-all-b.png" alt="Spoke to on-prem over the firewall"><figcaption>Spoke 1 → on-prem: the firewall and then the gateway. The reply is symmetric thanks to the GatewaySubnet UDR.</figcaption></figure>
+<figure><img src="docs/img/fw-all-c.png" alt="Spoke to Internet over the firewall"><figcaption>Spoke 2 → Internet: SNAT on the firewall.</figcaption></figure>
+<figure><img src="docs/img/fw-all-b-trace.png" alt="Trace of spoke to on-prem"><figcaption>Trace of spoke 1 → on-prem.</figcaption></figure>
+<p><strong>Things to try:</strong> enable <em>Propagate gateway routes</em> on a spoke and watch the more specific BGP routes (e.g. <code>192.168.0.0/16</code>) override part of the picture; remove a GatewaySubnet UDR and see the asymmetry appear.</p>
+</div>
+
+<div class="card" id="p-fw-public">
+<h3>2 · ✔ Public over Azure Firewall, private via gateway (no spoke-to-spoke)</h3>
+<p><strong>Goal:</strong> only Internet traffic is inspected. On-prem traffic goes directly over the ER gateway, with no firewall in the path.</p>
+<h4>Configuration</h4>
+<ul>
+  <li>On-prem connects and advertises only <strong><code>192.168.10.0/24</code></strong>: a small, non-overlapping range, <em>not</em> RFC1918. This avoids a hairpin because Azure does not learn any summary that covers the spokes.</li>
+  <li>Spokes: default <code>0.0.0.0/0 → Azure Firewall</code>, <em>Propagate gateway routes</em> on, so the BGP /24 (more specific) sends on-prem traffic straight to the gateway.</li>
+  <li>No UDRs on the GatewaySubnet.</li>
+</ul>
+<h4>Traffic</h4>
+<table>
+<tr><th>Flow</th><th>Request</th><th>Reply</th></tr>
+<tr><td>Spoke 1 → on-prem</td><td>spoke 1 → ER gateway → MSEE → on-prem</td><td>on-prem → MSEE → ER gateway → spoke 1</td></tr>
+<tr><td>Spoke 2 → Internet</td><td>spoke 2 → firewall → Internet</td><td>Internet → firewall → spoke 2</td></tr>
+<tr><td>Spoke 1 → spoke 2</td><td>spoke 1 → firewall → spoke 2 (via the default route)</td><td>spoke 2 → firewall → spoke 1</td></tr>
+</table>
+<p><strong>Verdict:</strong> <span class="tag ok">✔ Delivered</span> for each flow, symmetric. Spoke ↔ spoke traffic is not blocked: the only path between the spokes is the default route through the firewall, which acts as an inspected path unless the firewall policy denies it. There is no direct spoke-to-spoke route (peering between the spokes does not exist).</p>
+<figure><img src="docs/img/fw-public-gw-private-a.png" alt="Spoke to on-prem directly through the gateway"><figcaption>Spoke 1 → on-prem goes straight through the ER gateway.</figcaption></figure>
+<figure><img src="docs/img/fw-public-gw-private-b.png" alt="Spoke to Internet through the firewall"><figcaption>Spoke 2 → Internet is inspected by the firewall.</figcaption></figure>
+<p><strong>Things to try:</strong> change the on-prem advertisement to <em>RFC1918</em> and watch the hairpin appear; this is exactly what scenario 6 shows.</p>
+</div>
+
+<div class="card" id="p-vnra-private">
+<h3>3 · ✔ Public over Azure Firewall, private (incl. on-prem) over VNRA</h3>
+<p><strong>Goal:</strong> use the VNRA as a high-throughput router for all private traffic and keep the firewall for Internet traffic.</p>
+<h4>Configuration</h4>
+<ul>
+  <li>VNRA deployed (<code>172.16.0.128/26</code>, IP <code>172.16.0.132</code>).</li>
+  <li>Spokes: UDRs for <code>10.0.0.0/8</code>, <code>172.16.0.0/12</code> and <code>192.168.0.0/16</code> → VNRA, and <code>0.0.0.0/0</code> → Azure Firewall. The RFC1918 UDRs win over the default route and over the BGP routes of the same prefix.</li>
+  <li>GatewaySubnet: UDRs for each spoke range → VNRA, so returning on-prem traffic goes through the same appliance.</li>
+</ul>
+<h4>Traffic</h4>
+<table>
+<tr><th>Flow</th><th>Request</th><th>Reply</th></tr>
+<tr><td>Spoke 1 → spoke 2</td><td>spoke 1 → VNRA → spoke 2</td><td>spoke 2 → VNRA → spoke 1</td></tr>
+<tr><td>Spoke 1 → on-prem</td><td>spoke 1 → VNRA → ER gateway → MSEE → on-prem</td><td>on-prem → MSEE → ER gateway → VNRA → spoke 1</td></tr>
+<tr><td>Spoke 2 → Internet</td><td>spoke 2 → firewall → Internet</td><td>Internet → firewall → spoke 2</td></tr>
+</table>
+<p><strong>Verdict:</strong> <span class="tag ok">✔ Delivered</span>. The VNRA does not SNAT, so both directions stay symmetric. Private traffic is routed but <em>not</em> inspected; Internet traffic is inspected.</p>
+<figure><img src="docs/img/vnra-private-a.png" alt="Spoke to on-prem over VNRA"><figcaption>Spoke 1 → on-prem over the VNRA.</figcaption></figure>
+<figure><img src="docs/img/vnra-private-b.png" alt="Spoke to Internet over firewall"><figcaption>Spoke 2 → Internet over the firewall.</figcaption></figure>
+</div>
+
+<div class="card" id="p-vnra-all">
+<h3>4 · ✔ Private (incl. on-prem) and Public over VNRA, VNRA default route to firewall</h3>
+<p><strong>Goal:</strong> spokes only know one next hop (the VNRA). The VNRA decides: private traffic is routed, Internet traffic is chained on to the firewall.</p>
+<h4>Configuration</h4>
+<ul>
+  <li>VNRA deployed.</li>
+  <li>Spokes: <em>Propagate gateway routes</em> <strong>disabled</strong>, one UDR <code>0.0.0.0/0 → VNRA</code>.</li>
+  <li>VNRA subnet: UDR <code>0.0.0.0/0 → Azure Firewall</code>.</li>
+  <li>GatewaySubnet: spoke ranges → VNRA.</li>
+</ul>
+<h4>Traffic</h4>
+<table>
+<tr><th>Flow</th><th>Request</th><th>Reply</th></tr>
+<tr><td>Spoke 1 → spoke 2</td><td>spoke 1 → VNRA → spoke 2</td><td>spoke 2 → VNRA → spoke 1</td></tr>
+<tr><td>Spoke 1 → on-prem</td><td>spoke 1 → VNRA → ER gateway → MSEE → on-prem</td><td>on-prem → MSEE → ER gateway → VNRA → spoke 1</td></tr>
+<tr><td>Spoke 2 → Internet</td><td>spoke 2 → VNRA → firewall → Internet</td><td>Internet → firewall → VNRA → spoke 2</td></tr>
+</table>
+<p><strong>Verdict:</strong> <span class="tag ok">✔ Delivered</span>, symmetric. Internet traffic is inspected. Spoke 1 → spoke 2 also goes through the VNRA.</p>
+<figure><img src="docs/img/vnra-all-a.png" alt="Spoke to on-prem over VNRA"><figcaption>Spoke 1 → on-prem over the VNRA.</figcaption></figure>
+<figure><img src="docs/img/vnra-all-b.png" alt="Spoke to Internet through VNRA and firewall"><figcaption>Spoke 2 → Internet: VNRA → firewall → Internet.</figcaption></figure>
+<figure><img src="docs/img/vnra-all-b-trace.png" alt="Trace of VNRA chaining to firewall"><figcaption>The trace shows the chain spoke → VNRA → firewall → Internet.</figcaption></figure>
+</div>
+
+<div class="card" id="p-bad-asym-fw">
+<h3>5 · ✖ Asymmetric traffic over Azure Firewall (spoke ↔ spoke)</h3>
+<p><strong>What goes wrong:</strong> only <em>spoke 1</em> has a UDR that sends the spoke range to the firewall. Spoke 2 has no such route.</p>
+<ul>
+  <li>Request: spoke 1 → firewall → spoke 2 (via the UDR on spoke 1).</li>
+  <li>Reply: spoke 2 does not send the reply to the firewall. It follows the BGP summary learned over ExpressRoute: spoke 2 → ER gateway → MSEE → ER gateway → spoke 1, so it never reaches the firewall.</li>
+</ul>
+<p><strong>Result:</strong> <span class="tag bad">✖ Delivered one way only</span> with the findings <strong>Asymmetric</strong> (the firewall sees half a session and drops it) and <strong>Hairpin</strong> (the reply even leaves Azure).</p>
+<p><strong>Fix:</strong> give both spokes the same UDR (or disable propagation on both spokes and use one default route to the firewall), so request and reply use the same appliance.</p>
+<figure><img src="docs/img/bad-asym-fw-a.png" alt="Asymmetric flow"><figcaption>The request (blue) goes via the firewall and the reply (green, dashed) via the gateway.</figcaption></figure>
+<figure><img src="docs/img/bad-asym-fw-a-trace.png" alt="Trace of asymmetric flow"></figure>
+</div>
+
+<div class="card" id="p-bad-hairpin">
+<h3>6 · ✖ Hairpin over ER MSEE (on-prem advertises RFC1918)</h3>
+<p><strong>What goes wrong:</strong> the spokes only have <code>0.0.0.0/0 → Azure Firewall</code> and on-prem advertises the entire RFC1918 range. The BGP routes <code>10.0.0.0/8</code>, <code>172.16.0.0/12</code> and <code>192.168.0.0/16</code> are more specific than the default route, so <code>172.16.0.0/12</code> covers the other spoke.</p>
+<ul>
+  <li>Spoke 1 → spoke 2 matches <code>172.16.0.0/12 → Virtual network gateway</code> (BGP) and not the default route to the firewall. The packet goes to the ER gateway, to the MSEE, which has the better route (the Azure /24) and sends it back to the gateway and into the spoke 2.</li>
+  <li>The firewall is never involved.</li>
+</ul>
+<p><strong>Result:</strong> <span class="tag warn">⚠ Delivered, with warnings</span>: <strong>Hairpin</strong>. It works, but adds latency, consumes circuit bandwidth, and is not inspected.</p>
+<p><strong>Fix:</strong> stop advertising a range covering your Azure address space (advertise only your real on-prem networks, as in scenario 2) or add UDRs for the Azure summary range to the firewall, or disable <em>Propagate gateway routes</em> on the spokes (as in scenario 1).</p>
+<figure><img src="docs/img/bad-hairpin-a.png" alt="Hairpin flow"><figcaption>The line goes down to the ER gateway and back up: that is the hairpin.</figcaption></figure>
+</div>
+
+<div class="card" id="p-bad-asym-onprem">
+<h3>7 · ✖ Asymmetric traffic to on-prem (one leg over Azure Firewall)</h3>
+<p><strong>What goes wrong:</strong> the spokes send on-prem traffic to the firewall (UDRs for the on-prem networks), but the GatewaySubnet has <em>no</em> UDR for the spoke ranges.</p>
+<ul>
+  <li>Request: spoke 1 → firewall → ER gateway → MSEE → on-prem.</li>
+  <li>Reply: on-prem → MSEE → ER gateway → <em>directly</em> into spoke 1 over the peering, because the gateway knows the spoke's peering route.</li>
+</ul>
+<p><strong>Result:</strong> <span class="tag bad">✖ Delivered one way only</span> with the finding <strong>Asymmetric</strong>. The firewall only sees the SYN, never the SYN-ACK, and drops the session.</p>
+<p><strong>Fix:</strong> add UDRs on the GatewaySubnet for the spoke ranges (<code>172.16.1.0/24</code>, <code>172.16.2.0/24</code>) → firewall, so the return leg is inspected too (scenario 1).</p>
+<figure><img src="docs/img/bad-asym-onprem-a.png" alt="Asymmetric flow to on-prem"><figcaption>The reply skips the firewall and goes straight from the gateway to the spoke.</figcaption></figure>
+<figure><img src="docs/img/bad-asym-onprem-a-trace.png" alt="Trace of asymmetric flow to on-prem"></figure>
+</div>
+
+<h2 id="sharing">Sharing and saving</h2>
+<ul>
+  <li><strong>Share</strong> copies a link with the complete scenario encoded in the URL hash (<code>#s=…</code>). Open it and the recipient sees exactly your configuration, flow and, if it matches a preset, the preset name.</li>
+  <li>Your edits are saved automatically in your browser (<em>localStorage</em>) and restored on your next visit. <strong>Reset</strong> clears them.</li>
+  <li>Nothing leaves your browser; there is no analytics and no server.</li>
+</ul>
+
+<h2 id="limits">Limitations</h2>
+<ul>
+  <li>This is a routing-model simulator, not Azure itself. It does not model NSGs, Azure Firewall rule evaluation (only a single allow/deny switch), load balancers, Private Link, VPN gateways, Route Server or multiple regions.</li>
+  <li>One hub, two spokes and one ExpressRoute circuit.</li>
+  <li>IPv4 only.</li>
+  <li>Preview features (Disable peering route propagation, VNRA) can change before general availability. Validate against Microsoft Learn before you build.</li>
+  <li>Always test the real network: the simulator is a design and teaching aid, not a replacement for <em>Effective routes</em> and <em>Next hop</em> in Azure Network Watcher.</li>
+</ul>
+
+<h2 id="dev">Run, test, host</h2>
+<ul>
+  <li>Static site, no build step: open <code>index.html</code>. Files: <code>engine.js</code> (routing engine), <code>ui.js</code> (rendering), <code>style.css</code>, <code>docs.html</code>.</li>
+  <li>Engine tests: <code>node tests/engine.test.js</code>.</li>
+  <li>GitHub Pages: repository <strong>Settings → Pages</strong>, deploy from branch <code>main</code>, folder <code>/ (root)</code>.</li>
+  <li>The original single-file version is kept in <code>legacy/</code>.</li>
+</ul>
+
+<h2 id="glossary">Glossary</h2>
+<table>
+<tr><th>Term</th><th>Meaning</th></tr>
+<tr><td>UDR</td><td>User-defined route in a route table.</td></tr>
+<tr><td>BGP</td><td>Border Gateway Protocol; how routes are exchanged between on-prem, the MSEE and the ER gateway.</td></tr>
+<tr><td>MSEE</td><td>Microsoft Enterprise Edge, the Microsoft side routers of an ExpressRoute circuit.</td></tr>
+<tr><td>ER gateway</td><td>ExpressRoute virtual network gateway in the GatewaySubnet.</td></tr>
+<tr><td>VNRA</td><td>Virtual Network Routing Appliance: a forwarding-only hub appliance (preview).</td></tr>
+<tr><td>DPR</td><td>Disable peering route propagation (preview).</td></tr>
+<tr><td>Hairpin</td><td>Traffic that leaves Azure and returns over the same circuit.</td></tr>
+<tr><td>Asymmetric routing</td><td>Request and reply use different paths.</td></tr>
+<tr><td>SNAT</td><td>Source network address translation, used by the firewall for Internet egress.</td></tr>
+<tr><td>Next hop</td><td>The device a route points to.</td></tr>
+<tr><td>Longest prefix match</td><td>The most specific matching route wins.</td></tr>
+</table>
+
+</main>
+</div>
+<div id="lb"><img alt=""></div>
+<script>
+if (localStorage.getItem('rs2.theme') === 'light') document.body.classList.add('light');
+document.getElementById('bTheme').onclick = function () { document.body.classList.toggle('light'); localStorage.setItem('rs2.theme', document.body.classList.contains('light') ? 'light' : 'dark'); };
+var lb = document.getElementById('lb');
+document.addEventListener('click', function (e) {
+  if (e.target.matches('figure img')) { lb.firstChild.src = e.target.src; lb.style.display = 'flex'; }
+  else if (lb.contains(e.target) || e.target === lb) lb.style.display = 'none';
+});
+</script>
+</body>
+</html>
