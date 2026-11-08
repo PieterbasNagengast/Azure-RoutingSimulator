@@ -129,7 +129,7 @@ th{background:var(--panel2)}
   <li><strong>ExpressRoute circuit (MSEE)</strong>, the Microsoft edge routers that exchange routes between on-prem and Azure.</li>
   <li><strong>vnet-hub</strong> (<code>172.16.0.0/24</code>) with the <strong>ER Gateway</strong> (GatewaySubnet), the <strong>Azure Firewall</strong> and the optional <strong>VNRA</strong> (Virtual Network Routing Appliance). Every one has its own subnet and, for appliances, its own route table.</li>
   <li><strong>vnet-spoke-01</strong> (<code>172.16.1.0/24</code>) and <strong>vnet-spoke-02</strong> (<code>172.16.2.0/24</code>), each peered with the hub and each with a VM.</li>
-  <li><strong>Internet</strong>, reached through the firewall (SNAT), a NAT gateway / public IP on a spoke (explicit outbound), or not at all.</li>
+  <li><strong>Internet</strong>, shown with a red dashed line and a ✕ labelled <em>no default outbound</em> when a spoke has no explicit outbound method and no <code>0.0.0.0/0</code> UDR. Otherwise reached through the firewall (SNAT), a NAT gateway / public IP on a spoke (explicit outbound), or not at all.</li>
 </ul>
 <h3>Reading the lines</h3>
 <ul>
@@ -146,7 +146,7 @@ th{background:var(--panel2)}
   <li><strong>From</strong>: the origin of the packet. Spoke 1, spoke 2 or on-prem.</li>
   <li><strong>Source IP</strong> / <strong>Destination IP</strong>: any IPv4 address. A red outline means the address is not valid. The destination drives which component is the target: a spoke VM, an on-prem host or any other address, which is treated as the Internet.</li>
   <li><strong>→ quick buttons</strong>: set the destination to spoke 1, spoke 2, on-prem or the Internet in one click.</li>
-  <li><strong>Verdict badge</strong>:
+  <li><strong>Verdict badge</strong> (click it to open the Traffic trace):
     <table>
       <tr><td><span class="tag ok">✔ Delivered · inspected</span></td><td>Request and reply were both delivered and the traffic passed an inspecting appliance.</td></tr>
       <tr><td><span class="tag ok">✔ Delivered</span></td><td>Delivered both ways, without inspection (not necessarily a problem, for example on-prem to a spoke without a firewall requirement).</td></tr>
@@ -158,11 +158,11 @@ th{background:var(--panel2)}
 </ul>
 
 <h2 id="trace">Traffic trace</h2>
-<p>Press the <strong>Traffic trace</strong> bar at the bottom to slide the panel up. It has three columns:</p>
+<p>Press the <strong>Traffic trace</strong> bar at the bottom, or click the <strong>verdict badge</strong> at the top right, to slide the panel up. It has three columns:</p>
 <ul>
   <li><strong>Request</strong>: every hop with the route that was chosen (source, prefix, next hop) and a sentence that explains the decision.</li>
   <li><strong>Reply</strong>: the same for the way back. If it follows the request path in reverse, it says so.</li>
-  <li><strong>Findings</strong>: warnings and errors such as hairpin, asymmetry, bypassed UDRs, or <em>No problems found</em>.</li>
+  <li><strong>Findings</strong>: warnings and errors such as hairpin, asymmetry, bypassed UDRs, or <em>No problems found</em>. Every finding explains <em>why</em> it happens and has a blue <strong>How to fix</strong> box with the concrete change to make (for a dropped flow the hint is derived from the drop reason).</li>
 </ul>
 <figure><img src="docs/img/bad-hairpin-a-trace.png" alt="Trace showing an ExpressRoute hairpin"><figcaption>The trace of the hairpin scenario: the BGP route <code>172.16.0.0/12</code> sends spoke traffic to the MSEE, which sends it straight back.</figcaption></figure>
 
@@ -249,6 +249,7 @@ th{background:var(--panel2)}
 <h3>Virtual Network Routing Appliance (VNRA)</h3>
 <p>The VNRA (preview) is a pure routing/forwarding appliance in the hub. It does not SNAT and does not track sessions, so it tolerates asymmetry, but it provides no inspection either. Enable it in the topology (the dashed box) or its configuration panel. Use it for private traffic and chain it to the firewall for Internet traffic (scenarios 3 and 4).</p>
 <h2 id="findings">Findings and verdicts</h2>
+<p>When a flow does not work (dropped, asymmetric, hairpin and so on) the Findings column of the trace shows the cause and a <strong>How to fix</strong> hint. The table below lists the typical cases.</p>
 <table>
 <tr><th>Finding</th><th>Meaning</th><th>Typical fix</th></tr>
 <tr><td><span class="tag bad">Asymmetric</span> (error)</td><td>Only one direction passes a stateful firewall. It sees half a session and drops it.</td><td>Make both directions use the same inspection point: a UDR on the spoke <em>and</em> on the GatewaySubnet (or disable propagation and use a default route).</td></tr>
