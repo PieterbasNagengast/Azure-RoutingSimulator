@@ -10,16 +10,14 @@
 <header>
   <h1>Azure Hub &amp; Spoke <span>Routing Simulator</span></h1>
   <select id="preset" title="Load a scenario"></select>
-  <span id="pdesc" class="muted"></span>
+  <button id="bInfo" title="About this scenario" aria-label="About this scenario">ⓘ</button>
   <span class="sp"></span>
   <span id="vchip" class="chip" hidden></span>
   <button id="bCfg" title="Open configuration">⚙ Config</button>
   <button id="bShare" title="Copy a link containing this scenario">Share</button>
-  <button id="bExport">Export</button>
-  <button id="bImport">Import</button>
   <button id="bReset">Reset</button>
   <button id="bTheme" title="Toggle theme">◐</button>
-  <input type="file" id="fImport" accept=".json,application/json" hidden>
+  <div id="pdesc" hidden></div>
 </header>
 <section id="flowbar">
   <label>From <select id="fSrc"></select></label>
