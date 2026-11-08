@@ -364,6 +364,8 @@
   $('#preset').onchange = e => { if (e.target.value !== 'custom') loadPreset(e.target.value); };
   $('#bReset').onclick = () => loadPreset(RS.presets[0].id);
   $('#bTheme').onclick = () => { document.body.classList.toggle('light'); localStorage.setItem('rs2.theme', document.body.classList.contains('light') ? 'light' : 'dark'); };
+  $('#bInfo').onclick = e => { e.stopPropagation(); $('#pdesc').hidden = !$('#pdesc').hidden; };
+  document.addEventListener('click', e => { if (!e.target.closest('#pdesc')) $('#pdesc').hidden = true; });
   $('#bCfg').onclick = () => document.body.classList.toggle('cfg');
   $('#iClose').onclick = () => document.body.classList.remove('cfg');
   $('#bTrace').onclick = () => { $('#trace').classList.toggle('col'); $('#bTrace').textContent = $('#trace').classList.contains('col') ? '▴' : '▾'; };
@@ -372,18 +374,6 @@
     history.replaceState(null, '', u);
     (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => alert('Link copied to clipboard.'), () => prompt('Copy this link', u));
   };
-  $('#bExport').onclick = () => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(scn, null, 2)], { type: 'application/json' }));
-    a.download = 'routing-scenario.json'; a.click();
-  };
-  $('#bImport').onclick = () => $('#fImport').click();
-  $('#fImport').onchange = e => {
-    const f = e.target.files[0]; if (!f) return;
-    f.text().then(t => { try { scn = RS.normalize(JSON.parse(t)); presetId = 'custom'; save(); render(); } catch (x) { alert('Not a valid scenario file.'); } });
-    e.target.value = '';
-  };
-
   /* ---------- zoom / pan ---------- */
   let vb = { x: 0, y: 0, w: 1220, h: 680 };
   function applyView() { $('#svg').setAttribute('viewBox', vb.x + ' ' + vb.y + ' ' + vb.w + ' ' + vb.h); }

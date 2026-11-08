@@ -97,3 +97,6 @@ tr.used td{background:rgba(77,163,255,.18)}
   #traceBody{grid-template-columns:1fr}
   button,select,input{min-height:34px}
 }
+
+#pdesc{position:fixed;top:52px;left:14px;right:14px;max-width:460px;z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;box-shadow:0 8px 24px #0007;font-size:13px;line-height:1.45}
+#pdesc[hidden]{display:none}
